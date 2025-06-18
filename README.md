@@ -1,3 +1,6 @@
+## gitee地址
+https://gitee.com/fdfgasdvdxz/xiangqin
+
 
 ## 界面截图
 
