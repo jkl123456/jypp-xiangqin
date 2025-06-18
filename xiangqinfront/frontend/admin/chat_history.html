@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>聊天记录</title>
+    <link rel="stylesheet" href="admin_styles.css">
+    <style>
+        .chat-container {
+            border: 1px solid #ddd;
+            padding: 15px;
+            height: 500px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            background-color: #f9f9f9;
+        }
+        .chat-message {
+            padding: 8px 12px;
+            margin-bottom: 10px;
+            border-radius: 15px;
+            max-width: 70%;
+            word-wrap: break-word;
+        }
+        .message-sender {
+            background-color: #dcf8c6; /* Light green for sender */
+            margin-left: auto; /* Align to right */
+            border-bottom-right-radius: 0;
+        }
+        .message-receiver {
+            background-color: #fff; /* White for receiver */
+            border: 1px solid #eee;
+            margin-right: auto; /* Align to left */
+            border-bottom-left-radius: 0;
+        }
+        .message-meta {
+            font-size: 0.8em;
+            color: #777;
+            margin-top: 3px;
+        }
+        .message-sender .message-meta {
+            text-align: right;
+        }
+         .message-receiver .message-meta {
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="container dashboard-container">
+        <div class="dashboard-header">
+            <h1 id="chatHistoryTitle">聊天记录</h1>
+            <div>
+                <a id="backToUserDetails" href="#" class="button" style="margin-right: 10px;">返回用户详情</a>
+                <button id="logoutButton" class="button">登出</button>
+            </div>
+        </div>
+
+        <div class="chat-container" id="chatMessagesContainer">
+            <!-- 聊天消息将通过JS动态插入 -->
+        </div>
+        <div style="text-align: center;">
+            <button id="loadMoreMessages" class="button" style="display:none;">加载更多</button>
+        </div>
+    </div>
+    <script src="chat_history.js"></script>
+</body>
+</html>

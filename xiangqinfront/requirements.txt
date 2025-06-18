@@ -1,0 +1,4 @@
+websockets
+pyjwt
+aiohttp
+apscheduler

@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>心动匹配 - 聊天列表</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css"> <!-- General styles -->
+    <link rel="stylesheet" href="css/theme-styles.css"> <!-- Theme specific styles -->
+    <script src="js/config.js"></script> <!-- 引入配置文件 -->
+    <style>
+        /* Styles specific to chat-list.html */
+        .container { /* chat-list specific container width */
+            max-width: 500px;
+            margin: 0 auto; /* Center container */
+            padding: 10px; /* Horizontal padding */
+            /* padding-bottom is handled by body for fixed nav, container's own content flow */
+            display: flex;
+            flex-direction: column;
+            height: 100%; /* Fill the content box of body */
+            box-sizing: border-box;
+        }
+
+        /* Header, logo, user-actions will be themed by theme-styles.css or styles.css */
+        /* Retain specific layout if needed, otherwise remove if covered by global styles */
+        header { /* Basic header structure for this page */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            /* border-bottom: 1px solid rgba(var(--primary-glow-color-rgb, 196, 113, 237),0.1); */ /* Example themed border */
+        }
+        
+        .chat-search {
+            padding: 10px 0;
+        }
+
+        .search-container { /* Style for search bar, can be themed */
+            display: flex;
+            align-items: center;
+            background: rgba(var(--primary-glow-color-rgb, 255, 255, 255), 0.05); /* Themed background */
+            border: 1px solid rgba(var(--primary-glow-color-rgb, 196, 113, 237),0.2);
+            border-radius: 20px;
+            padding: 8px 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .search-container i {
+            color: var(--text-glow-color); /* Themed icon color */
+            margin-right: 10px;
+        }
+
+        .search-container input {
+            border: none;
+            outline: none;
+            font-size: 16px;
+            width: 100%;
+            background: transparent;
+            color: var(--text-glow-color); /* Themed text color */
+        }
+        .search-container input::placeholder {
+            color: rgba(var(--text-glow-color-rgb, 240, 217, 255), 0.7);
+        }
+
+
+        .chat-list-container {
+            margin: 20px 0;
+            flex: 1; /* Allow this to take up available space in flex column */
+            overflow-y: auto; /* Allow chat list to scroll if content overflows */
+            min-height: 0; /* Important for flex item with overflow */
+        }
+
+        .chat-list-container h1 {
+            font-size: 28px;
+            color: var(--text-glow-color); /* Themed text color */
+            text-align: center;
+            text-shadow: 0 0 5px rgba(var(--primary-glow-color-rgb, 196, 113, 237), 0.5);
+        }
+
+        .chat-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .chat-item { /* Themed chat item */
+            display: flex;
+            align-items: center;
+            background: rgba(var(--primary-glow-color-rgb, 196, 113, 237), 0.03);
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid rgba(var(--primary-glow-color-rgb, 196, 113, 237),0.15);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            text-decoration: none;
+            color: var(--text-glow-color);
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .chat-item:hover {
+            background: rgba(var(--primary-glow-color-rgb, 196, 113, 237), 0.08);
+            border-color: rgba(var(--primary-glow-color-rgb, 196, 113, 237), 0.4);
+        }
+
+        .chat-item img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 15px;
+            border: 2px solid rgba(var(--primary-glow-color-rgb, 196, 113, 237),0.3);
+        }
+
+        .chat-info {
+            flex: 1;
+            min-width: 0; /* Allows the flex item to shrink and enables text-overflow in children */
+        }
+
+        .chat-info h3 {
+            margin: 0;
+            font-size: 18px;
+            color: var(--text-glow-color);
+        }
+
+        .chat-info p {
+            margin: 5px 0 0;
+            font-size: 14px;
+            color: rgba(var(--text-glow-color-rgb, 240, 217, 255), 0.8);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: block; /* Ensure it's a block to respect width and overflow */
+            width: 100%; /* Take full width of .chat-info */
+        }
+
+        .text-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: var(--secondary-glow-color, #6253FF); /* Fallback color */
+            color: var(--text-glow-color, #f0d9ff); /* Fallback color for text, or choose a more contrasting one like #FFF or #000 based on bg */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-right: 15px;
+            border: 2px solid rgba(var(--primary-glow-color-rgb, 196, 113, 237), 0.3);
+            text-transform: uppercase;
+            flex-shrink: 0; /* Prevent shrinking */
+        }
+
+        .chat-meta {
+            text-align: right;
+        }
+
+        .chat-meta .timestamp {
+            font-size: 12px;
+            color: rgba(var(--text-glow-color-rgb, 240, 217, 255), 0.7);
+        }
+
+        .chat-meta .unread { /* Themed unread badge */
+            background: var(--primary-glow-color);
+            color: #050210; /* Dark text on bright background */
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            margin-top: 5px;
+            font-weight: bold;
+            box-shadow: 0 0 5px var(--primary-glow-color);
+        }
+
+        /* Styles for bottom navigation badge */
+        .nav-item { /* Ensure parent is relative for absolute positioning of badge */
+            position: relative;
+        }
+        .nav-item .badge {
+            position: absolute;
+            top: 2px; 
+            right: 5px; 
+            background-color: var(--primary-glow-color); 
+            color: #050210; 
+            border-radius: 50%;
+            min-width: 18px; /* Use min-width for single digit numbers */
+            height: 18px;
+            padding: 0 4px; /* Horizontal padding for multi-digit numbers */
+            font-size: 10px; 
+            font-weight: bold;
+            display: flex; 
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 3px var(--primary-glow-color);
+            line-height: 1;
+            box-sizing: border-box;
+            display: none; /* Initially hidden, JS will show it */
+        }
+        /* .bottom-nav styles are now in theme-styles.css */
+    </style>
+</head>
+<body class="theme-active">
+    <div class="tech-beams-background"> <!-- Added for theme consistency -->
+        <div class="beam beam-1"></div>
+        <div class="beam beam-2"></div>
+        <div class="beam beam-3"></div>
+        <div class="beam beam-4"></div>
+    </div>
+    <div class="container">
+        <!-- 顶部导航 -->
+        <header>
+            <div class="logo theme-active-logo">
+                <i class="fas fa-heart"></i>
+                <span>心动匹配</span>
+            </div>
+           
+        </header>
+
+        <!-- 聊天搜索 -->
+        <div class="chat-search">
+            <div class="search-container">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="搜索聊天..." id="searchInput">
+            </div>
+        </div>
+
+        <!-- 聊天列表 -->
+        <main class="chat-list-container">
+           
+            <div class="chat-list">
+                <!-- 聊天项将通过JS动态生成 -->
+            </div>
+        </main>
+
+        <!-- 底部导航 -->
+        <nav class="bottom-nav theme-active-nav">
+            <a href="index.html" class="nav-item">
+                <i class="fas fa-home"></i>
+                <span>首页</span>
+            </a>
+            <a href="swipe.html" class="nav-item">
+                <i class="fas fa-layer-group"></i> <!-- Corrected icon -->
+                <span>卡片</span>
+            </a>
+            <a href="interests.html" class="nav-item">
+                <i class="fas fa-hashtag"></i>
+                <span>兴趣</span>
+            </a>
+            <a href="chat-list.html" class="nav-item active">
+                <i class="fas fa-comments"></i>
+                <span>聊天</span>
+                <span class="badge" id="chat-nav-badge"></span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- Floating Action Button for Theme -->
+    <button class="fab-theme-button" id="fabThemeButton" aria-label="打开颜色选择器">
+        <i class="fas fa-palette"></i>
+    </button>
+
+    <!-- Color Drawer -->
+    <div class="color-drawer" id="colorDrawer">
+        <h4>选择主题颜色</h4>
+        <div class="color-options" id="colorOptionsContainer">
+            <!-- Color options will be populated by JavaScript -->
+        </div>
+    </div>
+
+    <script>
+        let chatData = [];
+        let currentUser = null;
+
+        // 获取当前用户ID
+        function getCurrentUserId() {
+            if (currentUser && currentUser.id) {
+                return currentUser.id;
+            }
+            // 如果没有用户信息，尝试从token解析
+            const token = localStorage.getItem('token');
+            if (token) {
+                try {
+                    const payload = JSON.parse(atob(token.split('.')[1]));
+                    return payload.user_id;
+                } catch (e) {
+                    console.error('解析token失败:', e);
+                }
+            }
+            return null;
+        }
+
+        // 检查用户登录状态
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('请先登录');
+                window.location.href = 'login.html';
+                return false;
+            }
+            return true;
+        }
+
+        // 加载当前用户信息
+        async function loadCurrentUser() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('http://14.103.133.136:5000/api/user/profile', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    currentUser = await response.json();
+                } else {
+                    console.error('加载用户信息失败');
+                }
+            } catch (error) {
+                console.error('加载用户信息错误:', error);
+            }
+        }
+
+        // 加载聊天列表
+        async function loadChatList() {
+            if (!checkAuth()) return;
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('http://14.103.133.136:5000/api/chats', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    // 按最后聊天时间排序，从新到旧
+                    chatData = data.chats.sort((a, b) => {
+                        if (!a.last_message_time && !b.last_message_time) return 0;
+                        if (!a.last_message_time) return 1;
+                        if (!b.last_message_time) return -1;
+                        return new Date(b.last_message_time) - new Date(a.last_message_time);
+                    });
+                    createChatList();
+                } else {
+                    console.error('加载聊天列表失败');
+                    showEmptyState();
+                }
+            } catch (error) {
+                console.error('网络错误:', error);
+                alert('网络错误，请检查连接后重试');
+            }
+        }
+
+        // 显示空状态
+        function showEmptyState() {
+            const chatList = document.querySelector('.chat-list');
+            chatList.innerHTML = `
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;  color: var(--text-glow-color); text-align: center;">
+                    <i class="fas fa-comments" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                    <h3>还没有聊天记录</h3>
+                    <p>去卡片页面找到心仪的人开始聊天吧！</p>
+                    <button class="btn btn-primary theme-active-btn" onclick="window.location.href='swipe.html'">
+                        开始匹配
+                    </button>
+                </div>
+            `;
+        }
+
+        // Function to create chat list items
+        function createChatList() {
+            const chatList = document.querySelector('.chat-list');
+            chatList.innerHTML = ''; // Clear existing items
+
+            if (chatData.length === 0) {
+                showEmptyState();
+                return;
+            }
+
+            chatData.forEach(chat => {
+                const chatItem = document.createElement('a');
+                chatItem.classList.add('chat-item');
+                chatItem.href = `chat.html?id=${chat.user_id}`;
+
+                const initials = chat.nickname ? chat.nickname.substring(0, 2).toUpperCase() : '??';
+                // Sanitize initials for display as HTML content
+                const displayInitials = initials.replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>');
+
+                let avatarDisplayHtml;
+                let rawAvatarUrl = chat.avatar;
+                if (rawAvatarUrl && !rawAvatarUrl.startsWith('http') && !rawAvatarUrl.startsWith('assets/')) {
+                    rawAvatarUrl = `${CONFIG.API_BASE_URL}${rawAvatarUrl}`;
+                }
+
+                if (rawAvatarUrl) {
+                    // If avatar URL exists, try to load it. On error, replace img with text avatar.
+                    // Ensure initials are safe for inclusion in the string.
+                    const onerrorJs = `this.outerHTML = '<div class=\\'text-avatar\\'>${displayInitials}</div>';`;
+                    avatarDisplayHtml = `<img src="${rawAvatarUrl}" alt="${chat.nickname}" onerror="${onerrorJs.replace(/"/g, '"')}">`;
+                } else {
+                    // No chat.avatar provided, use text avatar directly
+                    avatarDisplayHtml = `<div class="text-avatar">${displayInitials}</div>`;
+                }
+                
+                chatItem.innerHTML = `
+                    ${avatarDisplayHtml}
+                    <div class="chat-info">
+                        <h3>${chat.nickname}</h3>
+                        <p>${chat.last_message}</p>
+                    </div>
+                    <div class="chat-meta">
+                        <div class="timestamp">${formatTimestamp(chat.last_message_time)}</div>
+                        ${chat.unread_count > 0 ? `<div class="unread">${chat.unread_count > 99 ? '99+' : chat.unread_count}</div>` : ''}
+                    </div>
+                `;
+
+                chatList.appendChild(chatItem);
+            });
+        }
+
+        // Function to format timestamp (e.g., convert to "18:30" or "Yesterday")
+        function formatTimestamp(timestamp) {
+            if (!timestamp) return '';
+            
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+            
+            if (diffDays === 0) {
+                return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+            } else if (diffDays === 1) {
+                return '昨天';
+            } else {
+                return date.toLocaleDateString('zh-CN');
+            }
+        }
+
+        // Function to filter chat list based on search input
+        function setupSearch() {
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('input', () => {
+                const query = searchInput.value.toLowerCase();
+                const chatList = document.querySelector('.chat-list');
+                chatList.innerHTML = '';
+
+                const filteredChats = chatData.filter(chat => 
+                    chat.nickname.toLowerCase().includes(query)
+                );
+
+                if (filteredChats.length === 0) {
+                    chatList.innerHTML = `
+                        <div style="text-align: center; color: var(--text-glow-color); padding: 2rem;">
+                            <i class="fas fa-search" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                            <p>没有找到相关聊天</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                filteredChats.forEach(chat => {
+                    const chatItem = document.createElement('a');
+                    chatItem.classList.add('chat-item');
+                    chatItem.href = `chat.html?id=${chat.user_id}`;
+                    
+                    const initials = chat.nickname ? chat.nickname.substring(0, 2).toUpperCase() : '??';
+                    const displayInitials = initials.replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>');
+
+                    let avatarDisplayHtml;
+                    let rawAvatarUrlFiltered = chat.avatar;
+                    if (rawAvatarUrlFiltered && !rawAvatarUrlFiltered.startsWith('http') && !rawAvatarUrlFiltered.startsWith('assets/')) {
+                        rawAvatarUrlFiltered = `${CONFIG.API_BASE_URL}${rawAvatarUrlFiltered}`;
+                    }
+
+                    if (rawAvatarUrlFiltered) {
+                        const onerrorJs = `this.outerHTML = '<div class=\\'text-avatar\\'>${displayInitials}</div>';`;
+                        avatarDisplayHtml = `<img src="${rawAvatarUrlFiltered}" alt="${chat.nickname}" onerror="${onerrorJs.replace(/"/g, '"')}">`;
+                    } else {
+                        avatarDisplayHtml = `<div class="text-avatar">${displayInitials}</div>`;
+                    }
+
+                    chatItem.innerHTML = `
+                        ${avatarDisplayHtml}
+                        <div class="chat-info">
+                            <h3>${chat.nickname}</h3>
+                            <p>${chat.last_message}</p>
+                        </div>
+                        <div class="chat-meta">
+                            <div class="timestamp">${formatTimestamp(chat.last_message_time)}</div>
+                        </div>
+                    `;
+
+                    chatList.appendChild(chatItem);
+                });
+            });
+        }
+
+        // Initialize chat list and search when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            loadChatList();
+            setupSearch();
+
+            // --- Logic for total unread count badge and WebSocket ---
+            const token = localStorage.getItem('token'); // Ensure token is accessible
+            let ws; // WebSocket instance
+
+            function updateTotalUnreadBadge(count) {
+                const chatNavBadge = document.getElementById('chat-nav-badge');
+                if (chatNavBadge) {
+                    if (count > 0) {
+                        chatNavBadge.textContent = count > 99 ? '99+' : count;
+                        chatNavBadge.style.display = 'flex';
+                    } else {
+                        chatNavBadge.textContent = '';
+                        chatNavBadge.style.display = 'none';
+                    }
+                }
+            }
+
+            function fetchTotalUnreadCount() {
+                if (!token) {
+                    console.error('Token not available for fetchTotalUnreadCount.');
+                    updateTotalUnreadBadge(0);
+                    return;
+                }
+                fetch('http://14.103.133.136:5000/api/unread-count', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => {
+                            throw new Error(`HTTP error! status: ${response.status}, body: ${text}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data && typeof data.unread_count !== 'undefined') {
+                        updateTotalUnreadBadge(data.unread_count);
+                    } else {
+                        console.error('Failed to get unread_count from API response:', data);
+                        updateTotalUnreadBadge(0);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching total unread count:', error.message);
+                    updateTotalUnreadBadge(0);
+                });
+            }
+
+            function connectWebSocket() {
+                if (!token) {
+                    console.error("WebSocket: No token found, connection aborted.");
+                    return;
+                }
+                const wsUrl = `ws://14.103.133.136:8766?token=${token}`;
+                ws = new WebSocket(wsUrl);
+
+                ws.onopen = function() {
+                    console.log('WebSocket connection established for chat list page.');
+                };
+
+                ws.onmessage = function(event) {
+                    const data = JSON.parse(event.data);
+                    if (data.type === 'private_message' || data.type === 'room_message' || data.type === 'messages_marked_read' || data.type === 'unread_count_update') {
+                        // If any relevant message comes, refresh both list and total badge
+                        loadChatList(); // Reloads list items (handles individual unread counts)
+                        fetchTotalUnreadCount(); // Reloads total unread count for nav badge
+                    }
+                };
+
+                ws.onerror = function(error) {
+                    console.error('WebSocket Error on chat list page: ', error);
+                };
+
+                ws.onclose = function() {
+                    console.log('WebSocket connection closed on chat list page. Attempting to reconnect in 5s...');
+                    setTimeout(connectWebSocket, 5000);
+                };
+            }
+
+            // Initial calls for badge and WebSocket connection
+            if (token) {
+                fetchTotalUnreadCount();
+                connectWebSocket();
+            } else {
+                updateTotalUnreadBadge(0); // Ensure badge is hidden if no token
+            }
+            // --- End of unread count and WebSocket logic ---
+
+            // Theme Switcher Logic (Copied from index.html, ensure setRgbCssVars is available)
+            const fabThemeButton = document.getElementById('fabThemeButton');
+            const colorDrawer = document.getElementById('colorDrawer');
+            const colorOptionsContainer = document.getElementById('colorOptionsContainer');
+            const root = document.documentElement;
+
+            // Definition for hexToRgb if not globally available
+            function hexToRgb(hex) {
+                const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null;
+            }
+
+            // Definition for setRgbCssVars if not globally available
+            // This function should ideally be in a shared JS file, but for now, we'll include it here.
+            function setRgbCssVars() {
+                const rootStyles = getComputedStyle(document.documentElement);
+                const primaryGlowHex = rootStyles.getPropertyValue('--primary-glow-color').trim();
+                const secondaryGlowHex = rootStyles.getPropertyValue('--secondary-glow-color').trim();
+                const textGlowHex = rootStyles.getPropertyValue('--text-glow-color').trim();
+
+                const primaryGlowRgb = hexToRgb(primaryGlowHex);
+                const secondaryGlowRgb = hexToRgb(secondaryGlowHex);
+                const textGlowRgb = hexToRgb(textGlowHex);
+
+                if (primaryGlowRgb) document.documentElement.style.setProperty('--primary-glow-color-rgb', `${primaryGlowRgb.r},${primaryGlowRgb.g},${primaryGlowRgb.b}`);
+                if (secondaryGlowRgb) document.documentElement.style.setProperty('--secondary-glow-color-rgb', `${secondaryGlowRgb.r},${secondaryGlowRgb.g},${secondaryGlowRgb.b}`);
+                if (textGlowRgb) document.documentElement.style.setProperty('--text-glow-color-rgb', `${textGlowRgb.r},${textGlowRgb.g},${textGlowRgb.b}`);
+            }
+            // Initial call if colors are set by default in CSS
+            setRgbCssVars();
+
+
+            const themes = [
+                { name: 'Default Purple', primary: '#c471ed', secondary: '#6253FF', text: '#f0d9ff', tip: '#ffffff' },
+                { name: 'Cyber Blue', primary: '#00e0ff', secondary: '#0077ff', text: '#e0f7ff', tip: '#ffffff' },
+                { name: 'Synth Pink', primary: '#ff00aa', secondary: '#c500ff', text: '#ffe0f5', tip: '#ffffff' },
+                { name: 'Emerald Green', primary: '#00ffaa', secondary: '#00aa7f', text: '#e0fff5', tip: '#ffffff' },
+                { name: 'Solar Orange', primary: '#ffaa00', secondary: '#ff7700', text: '#fff5e0', tip: '#ffffff' },
+                { name: 'Ruby Red', primary: '#ff0055', secondary: '#aa003c', text: '#ffe0e8', tip: '#ffffff' }
+            ];
+
+            let currentTheme = themes[0]; 
+
+            function applyTheme(theme) {
+                root.style.setProperty('--primary-glow-color', theme.primary);
+                root.style.setProperty('--secondary-glow-color', theme.secondary);
+                root.style.setProperty('--text-glow-color', theme.text);
+                root.style.setProperty('--fiber-tip-highlight', theme.tip);
+                setRgbCssVars(); 
+                currentTheme = theme;
+                localStorage.setItem('selectedTheme', JSON.stringify(theme));
+                updateActiveColorOption();
+            }
+
+            function loadTheme() {
+                const savedTheme = localStorage.getItem('selectedTheme');
+                if (savedTheme) {
+                    applyTheme(JSON.parse(savedTheme));
+                } else {
+                    applyTheme(themes[0]); 
+                }
+            }
+
+            function updateActiveColorOption() {
+                const options = colorOptionsContainer.querySelectorAll('.color-option');
+                options.forEach(opt => {
+                    if (opt.dataset.primary === currentTheme.primary) {
+                        opt.classList.add('active');
+                    } else {
+                        opt.classList.remove('active');
+                    }
+                });
+            }
+
+            themes.forEach(theme => {
+                const option = document.createElement('div');
+                option.className = 'color-option';
+                option.dataset.primary = theme.primary;
+                
+                const span = document.createElement('span');
+                span.style.background = `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`;
+                option.appendChild(span);
+
+                option.setAttribute('title', theme.name);
+                option.addEventListener('click', () => {
+                    applyTheme(theme);
+                });
+                colorOptionsContainer.appendChild(option);
+            });
+
+            fabThemeButton.addEventListener('click', () => {
+                colorDrawer.classList.toggle('open');
+            });
+
+            document.addEventListener('click', (event) => {
+                if (!colorDrawer.contains(event.target) && !fabThemeButton.contains(event.target) && colorDrawer.classList.contains('open')) {
+                    colorDrawer.classList.remove('open');
+                }
+            });
+            
+            loadTheme();
+        });
+    </script>
+</body>
+</html>

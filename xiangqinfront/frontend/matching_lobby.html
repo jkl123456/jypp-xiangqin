@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>正在匹配</title>
+    <link rel="stylesheet" href="css/styles.css"> <!-- 通用样式 -->
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #f4f4f4;
+            font-family: Arial, sans-serif;
+        }
+        .matching-container {
+            text-align: center;
+            padding: 30px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+        }
+        .matching-container h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .spinner {
+            border: 6px solid #f3f3f3; /* Light grey */
+            border-top: 6px solid #5cb85c; /* Green */
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .cancel-button {
+            margin-top: 30px;
+            padding: 10px 20px;
+            background-color: #d9534f;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .cancel-button:hover {
+            background-color: #c9302c;
+        }
+        .status-message {
+            margin-top: 15px;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="matching-container">
+        <h1>正在为您匹配有缘人...</h1>
+        <div class="spinner"></div>
+        <p class="status-message" id="statusMessage">请稍候，我们正在努力寻找！</p>
+        <button id="cancelMatchingBtn" class="cancel-button">取消匹配</button>
+    </div>
+
+    <script>
+        const statusMessageEl = document.getElementById('statusMessage');
+        const cancelMatchingBtn = document.getElementById('cancelMatchingBtn');
+        let websocket;
+        const WS_URL = 'ws://14.103.133.136:8766'; // WebSocket服务器地址
+        let matchStartTime = null; // 用于记录匹配开始时间
+        let statusUpdateInterval = null; // 用于状态更新的interval ID
+        let isRedirectingAfterMatch = false; // 新增：标志位，表示是否因匹配成功而重定向
+        let redirectUrl = null; // 新增：保存重定向的URL
+
+        function updateStatusMessage() {
+            if (!matchStartTime) return;
+
+            const elapsedSeconds = Math.floor((Date.now() - matchStartTime) / 1000);
+            let message = `已在队列 ${elapsedSeconds} 秒. 请耐心等待...`;
+            
+            if (elapsedSeconds > 7 && elapsedSeconds <= 10) { // 在接近10秒时给出提示
+                message = `已在队列 ${elapsedSeconds} 秒. 仍在努力为您寻找，智能伙伴也快准备好了！`;
+            } else if (elapsedSeconds > 10) {
+                // 后端应该已经或即将匹配机器人
+                message = `已在队列 ${elapsedSeconds} 秒. 若无其他用户，将为您连接智能伙伴。`;
+            }
+            statusMessageEl.textContent = message;
+        }
+
+        function connectWebSocket() {
+            statusMessageEl.textContent = '正在准备连接...'; // 初始状态
+            const token = localStorage.getItem('token');
+            if (!token) {
+                statusMessageEl.textContent = '错误：用户未登录。';
+                alert('请先登录！');
+                window.location.href = 'login.html'; // 跳转到登录页
+                return;
+            }
+            statusMessageEl.textContent = 'Token已获取，尝试建立WebSocket连接...';
+
+            try {
+                // 对token进行编码，以防包含特殊字符导致URL无效
+                const encodedToken = encodeURIComponent(token);
+                websocket = new WebSocket(`${WS_URL}?token=${encodedToken}`);
+                statusMessageEl.textContent = 'WebSocket对象已创建，等待连接打开...';
+            } catch (e) {
+                console.error('创建WebSocket对象时出错:', e);
+                statusMessageEl.textContent = `创建连接对象失败: ${e.message}. 请检查WS_URL或浏览器限制。`;
+                return;
+            }
+
+            websocket.onopen = () => {
+                console.log('WebSocket连接已建立');
+                statusMessageEl.textContent = '连接成功，正在请求匹配...';
+                // 发送开始匹配请求
+                websocket.send(JSON.stringify({ type: 'start_matching' }));
+            };
+
+            websocket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                console.log('收到消息:', data);
+
+                switch (data.type) {
+                    case 'matching_started':
+                        statusMessageEl.textContent = '已加入匹配队列，请耐心等待... (0秒)';
+                        matchStartTime = Date.now();
+                        if (statusUpdateInterval) clearInterval(statusUpdateInterval); // 清除旧的interval
+                        statusUpdateInterval = setInterval(updateStatusMessage, 1000); // 每秒更新状态
+                        break;
+                    case 'match_found':
+                        if (statusUpdateInterval) clearInterval(statusUpdateInterval);
+                        matchStartTime = null;
+                        statusMessageEl.textContent = `匹配成功！正在跳转到聊天室...`;
+                        const { room_id, matched_user_id, matched_user_info } = data;
+                        // 假设聊天页面是 chat_room.html
+                        // 将需要的信息通过URL参数传递
+                        // chat.html 主要使用 'id' 参数作为对方的用户ID
+                        const queryParams = new URLSearchParams({
+                            id: matched_user_id, // chat.html 期望的参数名 (对方的用户ID)
+                            room_id: room_id // 保留传递
+                        });
+                        // 发送即将跳转的通知
+                        redirectUrl = `chat.html?${queryParams.toString()}`; // 保存目标URL
+
+                        if (websocket && websocket.readyState === WebSocket.OPEN) {
+                            websocket.send(JSON.stringify({ type: 'initiating_redirect', room_id: room_id }));
+                            isRedirectingAfterMatch = true; // 设置标志位
+                            // 主动关闭WebSocket，页面跳转将在onclose事件中处理
+                            websocket.close(1000, "Client redirecting to chat room after match found");
+                        } else {
+                            // 如果websocket已经关闭或未连接，直接跳转 (理论上不太可能进入此分支)
+                            window.location.replace(redirectUrl);
+                        }
+                        break;
+                    case 'match_ended': // 如果对方断开连接
+                        statusMessageEl.textContent = data.reason || '对方已离开匹配。';
+                        alert(data.reason || '对方已离开匹配。');
+                        // 可以选择跳转回主页或上一个页面
+                        // window.location.href = 'index.html';
+                        break;
+                    case 'error':
+                        statusMessageEl.textContent = `错误：${data.message}`;
+                        alert(`匹配出错：${data.message}`);
+                        // 可以根据错误类型决定是否取消匹配或跳转
+                        break;
+                    case 'matching_cancelled':
+                        if (statusUpdateInterval) clearInterval(statusUpdateInterval);
+                        matchStartTime = null;
+                        statusMessageEl.textContent = '您已取消匹配。';
+                        alert('匹配已取消。');
+                        // TODO: 跳转到合适的页面，例如首页或上一页
+                        // window.history.back(); // 返回上一页
+                        window.location.href = 'index.html'; // 或者跳转到首页
+                        break;
+                    case 'connected': // 后端连接成功后，前端可能收到这个，但主要依赖 onopen
+                        // statusMessageEl.textContent = '与服务器连接成功。';
+                        // 不在这里发 start_matching，已在 onopen 中处理
+                        break;
+                    default:
+                        // 其他消息类型
+                        break;
+                }
+            };
+
+            websocket.onclose = (event) => {
+                console.log('WebSocket连接已关闭:', event.code, event.reason);
+                if (statusUpdateInterval) clearInterval(statusUpdateInterval);
+                matchStartTime = null;
+
+                if (isRedirectingAfterMatch && event.code === 1000 && redirectUrl) {
+                    // 这是我们主动关闭以进行重定向的情况
+                    console.log('Redirecting to chat room now.');
+                    window.location.replace(redirectUrl);
+                } else {
+                    // 其他关闭情况
+                    const currentStatus = statusMessageEl.textContent;
+                    // 避免在成功跳转后，或取消匹配后，仍然显示“连接已断开”
+                    if (!currentStatus.includes('匹配成功') && 
+                        !currentStatus.includes('取消匹配') &&
+                        !isRedirectingAfterMatch) { // 额外检查，确保不是正在重定向
+                        statusMessageEl.textContent = '与服务器的连接已断开。请刷新页面重试。';
+                    }
+                }
+                isRedirectingAfterMatch = false; // 重置标志位
+                redirectUrl = null; // 清理URL
+            };
+
+            websocket.onerror = (error) => {
+                if (statusUpdateInterval) clearInterval(statusUpdateInterval);
+                matchStartTime = null;
+                console.error('WebSocket错误:', error);
+                statusMessageEl.textContent = '连接错误，请检查网络或稍后再试。';
+            };
+        }
+
+        cancelMatchingBtn.addEventListener('click', () => {
+            if (websocket && websocket.readyState === WebSocket.OPEN) {
+                statusMessageEl.textContent = '正在取消匹配...';
+                websocket.send(JSON.stringify({ type: 'cancel_matching' }));
+            } else {
+                // 如果websocket未连接或已关闭，直接跳转
+                window.location.href = 'index.html'; // 或其他合适页面
+            }
+        });
+
+        // 页面加载时自动连接
+        connectWebSocket();
+
+        // 处理页面卸载前自动取消匹配 (可选但推荐)
+        window.addEventListener('beforeunload', () => {
+            if (websocket && websocket.readyState === WebSocket.OPEN) {
+                // 只有在尚未匹配成功时才发送取消
+                if (!statusMessageEl.textContent.includes('匹配成功')) {
+                    websocket.send(JSON.stringify({ type: 'cancel_matching' }));
+                    // 注意: beforeunload 中不能保证异步操作完成
+                }
+                // websocket.close(); // 可以选择在这里关闭，但通常服务器会处理断连
+            }
+        });
+
+    </script>
+</body>
+</html>

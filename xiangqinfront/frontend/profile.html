@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人中心 - 心动匹配</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/theme-styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.1/dist/browser-image-compression.js"></script>
+    <style>
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 15px 60px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+            margin-bottom: 20px;
+        }
+
+        .profile-container {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .profile-sidebar {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .profile-main {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .avatar-section {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .avatar-container {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+
+        .avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--primary-glow-color, #c471ed);
+            box-shadow: 0 0 20px rgba(var(--primary-glow-color-rgb, 196, 113, 237), 0.5);
+        }
+
+        .avatar-upload {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            background: var(--primary-glow-color, #c471ed);
+            border: none;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            cursor: pointer;
+            color: white;
+            font-size: 14px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .user-info h2 {
+            margin: 0 0 5px 0;
+            color: var(--text-glow-color, #f0d9ff);
+            font-size: 1.5rem;
+        }
+
+        .user-status {
+            color: #888;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+
+        .profile-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .stat-number {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--primary-glow-color, #c471ed);
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #aaa;
+            margin-top: 5px;
+        }
+
+        .form-section {
+            margin-bottom: 25px;
+        }
+
+        .form-section h3 {
+            color: var(--text-glow-color, #f0d9ff);
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #ccc;
+            font-size: 0.9rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: white;
+            font-size: 0.9rem;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-glow-color, #c471ed);
+            box-shadow: 0 0 10px rgba(var(--primary-glow-color-rgb, 196, 113, 237), 0.3);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .card-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .card-item {
+            position: relative;
+            aspect-ratio: 3/4;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .card-item:hover {
+            border-color: var(--primary-glow-color, #c471ed);
+            box-shadow: 0 0 15px rgba(var(--primary-glow-color-rgb, 196, 113, 237), 0.3);
+        }
+
+        .card-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .card-item .add-icon {
+            font-size: 2rem;
+            color: #666;
+        }
+
+        .card-item .delete-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(255, 0, 0, 0.8);
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            color: white;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn-save {
+            flex: 1;
+            padding: 12px 25px;
+            background: linear-gradient(135deg, var(--primary-glow-color, #c471ed), var(--secondary-glow-color, #6253FF));
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(var(--primary-glow-color-rgb, 196, 113, 237), 0.4);
+        }
+
+        .btn-logout {
+            padding: 12px 25px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: #ccc;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-logout:hover {
+            background: rgba(255, 0, 0, 0.2);
+            border-color: rgba(255, 0, 0, 0.4);
+            color: #ff6b6b;
+        }
+
+        @media (max-width: 768px) {
+            .profile-container {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .card-gallery {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body class="theme-active">
+    <div class="tech-beams-background">
+        <div class="beam beam-1"></div>
+        <div class="beam beam-2"></div>
+        <div class="beam beam-3"></div>
+        <div class="beam beam-4"></div>
+    </div>
+
+    <div class="container">
+        <header>
+            <div class="logo theme-active-logo">
+                <i class="fas fa-atom"></i><span>心动匹配</span>
+            </div>
+            <div class="user-actions">
+                <a href="index.html" class="btn btn-outline theme-active-btn">
+                    <i class="fas fa-home"></i> 返回首页
+                </a>
+            </div>
+        </header>
+
+        <div class="profile-container">
+            <div class="profile-sidebar">
+                <div class="avatar-section">
+                    <div class="avatar-container">
+                        <img src="https://via.placeholder.com/120" alt="头像" class="avatar" id="avatarImg">
+                        <button class="avatar-upload" onclick="document.getElementById('avatarInput').click()">
+                            <i class="fas fa-camera"></i>
+                        </button>
+                        <input type="file" id="avatarInput" accept="image/*" style="display: none;">
+                    </div>
+                    <div class="user-info">
+                        <h2 id="displayName">加载中...</h2>
+                        <div class="user-status">在线</div>
+                    </div>
+                </div>
+
+                <div class="profile-stats">
+                    <div class="stat-item">
+                        <span class="stat-number" id="matchCount">0</span>
+                        <div class="stat-label">匹配数</div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number" id="chatCount">0</span>
+                        <div class="stat-label">聊天数</div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number" id="cardCount">0</span>
+                        <div class="stat-label">卡片数</div>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn-logout" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i> 退出登录
+                    </button>
+                </div>
+            </div>
+
+            <div class="profile-main">
+                <form id="profileForm">
+                    <div class="form-section">
+                        <h3><i class="fas fa-user"></i> 基本信息</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="nickname">昵称</label>
+                                <input type="text" id="nickname" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="age">年龄</label>
+                                <input type="number" id="age" class="form-control" min="18" max="100">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="gender">性别</label>
+                                <select id="gender" class="form-control">
+                                    <option value="">请选择</option>
+                                    <option value="male">男</option>
+                                    <option value="female">女</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="profession">职业</label>
+                                <input type="text" id="profession" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3><i class="fas fa-map-marker-alt"></i> 位置信息</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="province">省份</label>
+                                <select id="province" class="form-control" onchange="updateCities()" style="background: transparent; border: 1px solid rgba(255, 255, 255, 0.1);">
+                                    <option value="">请选择省份</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="city">城市</label>
+                                <select id="city" class="form-control" disabled style="background: transparent; border: 1px solid rgba(255, 255, 255, 0.1);">
+                                    <option value="">请先选择省份</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3><i class="fas fa-heart"></i> 兴趣标签</h3>
+                        <div class="form-group">
+                            <label for="interests">兴趣爱好 (用逗号分隔)</label>
+                            <input type="text" id="interests" class="form-control" placeholder="例如：音乐,电影,旅行,读书">
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3><i class="fas fa-align-left"></i> 个人简介</h3>
+                        <div class="form-group">
+                            <label for="bio">自我介绍</label>
+                            <textarea id="bio" class="form-control" rows="4" placeholder="介绍一下自己吧..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3><i class="fas fa-images"></i> 卡片墙</h3>
+                        <p style="color: #aaa; font-size: 0.9rem; margin-bottom: 15px;">
+                            上传最多6张照片，第一张将作为您的主要展示照片
+                        </p>
+                        <div class="card-gallery" id="cardGallery">
+                            <!-- 卡片将通过JS动态生成 -->
+                        </div>
+                        <input type="file" id="cardInput" accept="image/*" multiple style="display: none;">
+                    </div>
+
+                    <div class="action-buttons">
+                        <button type="submit" class="btn-save">
+                            <i class="fas fa-save"></i> 保存信息
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <nav class="bottom-nav theme-active-nav">
+        <a href="index.html" class="nav-item"><i class="fas fa-home"></i><span>首页</span></a>
+        <a href="swipe.html" class="nav-item"><i class="fas fa-layer-group"></i><span>卡片</span></a>
+        <a href="interests.html" class="nav-item"><i class="fas fa-hashtag"></i><span>兴趣</span></a>
+        <a href="chat-list.html" class="nav-item"><i class="fas fa-comments"></i><span>聊天</span></a>
+    </nav>
+
+    <script src="js/location-data.js"></script>
+    <script>
+        let userCards = []; // 用于存储卡片信息，主要在编辑自己profile时使用
+        let displayedUserProfile = {}; // 用于存储当前页面显示的用户（自己或他人）的信息
+        let currentUser = null; // 用于存储当前登录的用户信息
+        let isOwnProfile = true; // 标志位，true表示查看/编辑自己的profile，false表示查看他人profile
+        const API_BASE_URL = 'http://14.103.133.136:5000';
+
+        // 初始化省份城市选择
+        function initLocationSelectors() {
+            const provinceSelect = document.getElementById('province');
+            
+            // 添加省份选项
+            for (const province in chinaLocations) {
+                const option = document.createElement('option');
+                option.value = province;
+                option.textContent = province;
+                provinceSelect.appendChild(option);
+            }
+            
+            // 如果已有省份值，设置选中状态并更新城市
+            if (displayedUserProfile.province) {
+                provinceSelect.value = displayedUserProfile.province;
+                updateCities();
+                // The city selection is now handled within updateCities
+            }
+        }
+
+        // 更新城市选项
+        function updateCities() {
+            const provinceSelect = document.getElementById('province');
+            const citySelect = document.getElementById('city');
+            const selectedProvince = provinceSelect.value;
+            
+            // 清空城市选项
+            citySelect.innerHTML = '';
+            
+            if (selectedProvince) {
+                // 添加城市选项
+                const cities = chinaLocations[selectedProvince];
+                cities.forEach(city => {
+                    const option = document.createElement('option');
+                    option.value = city;
+                    option.textContent = city;
+                    citySelect.appendChild(option);
+                });
+                
+                citySelect.disabled = false;
+                citySelect.innerHTML = '<option value="">请选择城市</option>' + citySelect.innerHTML;
+
+                // 如果用户已有城市信息且与当前省份匹配，则设置城市
+                if (displayedUserProfile.city && chinaLocations[selectedProvince] && chinaLocations[selectedProvince].includes(displayedUserProfile.city)) {
+                    citySelect.value = displayedUserProfile.city;
+                }
+
+            } else {
+                citySelect.disabled = true;
+                citySelect.innerHTML = '<option value="">请先选择省份</option>';
+            }
+        }
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', async function() { // <--- 改为 async function
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('请先登录');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // initLocationSelectors(); // 将在 loadAndDisplayUserProfile 成功后调用
+            // 上面三行 loadUserProfile(), initializeCardGallery(), setupEventListeners() 已被移除，
+            // 因为它们的逻辑现在由新的流程控制，在 loadAndDisplayUserProfile 内部或之后被正确调用。
+            
+            // 获取当前登录用户信息
+            await getCurrentLoginUser(); 
+            if (!currentUser) { 
+                alert('无法验证您的身份，请重新登录。');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const viewingUserIdParam = urlParams.get('id');
+            let viewingUserId = null;
+            if (viewingUserIdParam) {
+                viewingUserId = parseInt(viewingUserIdParam);
+            }
+
+            if (viewingUserId && viewingUserId !== currentUser.id) {
+                isOwnProfile = false;
+                document.title = `用户资料 - 心动匹配`; 
+                await loadAndDisplayUserProfile(viewingUserId);
+            } else {
+                isOwnProfile = true; 
+                document.title = '个人中心 - 心动匹配';
+                await loadAndDisplayUserProfile(null); 
+            }
+            // 其他初始化如 setupEventListeners, setPageMode 将在 loadAndDisplayUserProfile 内部或之后调用
+        });
+
+        // 获取当前登录的用户信息 (确保 currentUser 被赋值)
+        async function getCurrentLoginUser() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                console.log('getCurrentLoginUser: No token found.');
+                return; 
+            }
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/profile`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    currentUser = await response.json();
+                } else {
+                    console.error('获取当前登录用户信息失败, status:', response.status);
+                    currentUser = null; 
+                }
+            } catch (error) {
+                console.error('获取当前登录用户信息网络错误:', error);
+                currentUser = null; 
+            }
+        }
+
+        // 加载并显示用户资料 (可以是自己或他人)
+        // userIdToLoad: 如果为null或等于currentUser.id，则加载自己的profile；否则加载指定用户的profile
+        async function loadAndDisplayUserProfile(userIdToLoad) {
+            const token = localStorage.getItem('token');
+            let apiUrl;
+            
+            if (!currentUser) {
+                console.error("loadAndDisplayUserProfile: currentUser is not available.");
+                // 在DOMContentLoaded中已有检查，理论上不应到这里，但作为安全措施
+                alert('用户会话错误，请重新登录。');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            if (userIdToLoad && userIdToLoad !== currentUser.id) {
+                apiUrl = `${API_BASE_URL}/api/user/${userIdToLoad}`;
+                // isOwnProfile 应该已在 DOMContentLoaded 中设置
+            } else {
+                apiUrl = `${API_BASE_URL}/api/profile`;
+                // isOwnProfile 应该已在 DOMContentLoaded 中设置
+                userIdToLoad = currentUser.id; // 确保后续逻辑使用当前用户ID
+            }
+            console.log(`Loading profile. isOwnProfile: ${isOwnProfile}, User to load: ${userIdToLoad}, URL: ${apiUrl}`);
+
+            try {
+                const response = await fetch(apiUrl, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    displayedUserProfile = data; 
+                    
+                    populateForm(data); 
+                    
+                    if (isOwnProfile) { 
+                        updateStats(data); 
+                    } else {
+                        const statsSection = document.querySelector('.profile-stats');
+                        if (statsSection) statsSection.style.display = 'none';
+                        document.title = `${data.nickname || '用户'}的资料 - 心动匹配`;
+                    }
+                    initLocationSelectors(); 
+                    setupEventListeners(); 
+                    setPageMode(isOwnProfile); // <--- 在数据加载和填充后调用
+                } else {
+                    console.error(`加载用户资料失败 (ID: ${userIdToLoad || 'current'}), Status: ${response.status}`);
+                    alert('加载用户信息失败，请重试。');
+                    // window.location.href = 'index.html'; // 可选：跳转到安全页面
+                }
+            } catch (error) {
+                console.error('网络错误:', error);
+                alert('网络错误，加载用户信息失败。');
+            }
+        }
+
+        // 设置页面模式 (编辑/只读)
+        function setPageMode(isEditable) {
+            const formElements = document.querySelectorAll('#profileForm input, #profileForm select, #profileForm textarea');
+            formElements.forEach(el => {
+                // 对于一些特定字段，如用户名/ID等，可能永远不应启用，即使是自己的profile
+                // 但这里我们先统一处理，后续可细化
+                el.disabled = !isEditable;
+            });
+
+            // 头像上传按钮和输入框
+            const avatarUploadButton = document.querySelector('.avatar-upload');
+            if (avatarUploadButton) avatarUploadButton.style.display = isEditable ? 'block' : 'none';
+            document.getElementById('avatarInput').disabled = !isEditable;
+            
+            // 卡片画廊的添加按钮和删除按钮
+            const cardGallery = document.getElementById('cardGallery');
+            const addCardPlaceholder = cardGallery.querySelector('.add-icon'); // 假设添加按钮的占位符有此class或通过其他方式识别
+            if (addCardPlaceholder && addCardPlaceholder.parentElement && addCardPlaceholder.parentElement.classList.contains('card-item')) {
+                 addCardPlaceholder.parentElement.style.display = isEditable ? 'flex' : 'none';
+                 // 如果是通过onclick触发文件输入，也需要控制
+                 if(isEditable) {
+                    addCardPlaceholder.parentElement.onclick = () => document.getElementById('cardInput').click();
+                 } else {
+                    addCardPlaceholder.parentElement.onclick = null;
+                 }
+            }
+            
+            const deleteCardButtons = cardGallery.querySelectorAll('.delete-btn');
+            deleteCardButtons.forEach(btn => btn.style.display = isEditable ? 'block' : 'none');
+            
+            // 卡片文件输入框 (通常是隐藏的，由按钮触发)
+            const cardInput = document.getElementById('cardInput');
+            if (cardInput) cardInput.disabled = !isEditable; // 虽然隐藏，但禁用可以防止意外触发
+
+            // 保存按钮
+            const saveButton = document.querySelector('.btn-save');
+            if (saveButton) saveButton.style.display = isEditable ? 'block' : 'none';
+            
+            // 退出登录按钮 (只在自己的profile显示)
+            const logoutButtonContainer = document.querySelector('.profile-sidebar .action-buttons'); // 假设退出按钮在此容器
+            if (logoutButtonContainer) { // 确保容器存在
+                 const logoutButton = logoutButtonContainer.querySelector('.btn-logout');
+                 if (logoutButton) logoutButton.style.display = isEditable ? 'block' : 'none';
+            }
+
+
+            if (!isEditable && displayedUserProfile) {
+                // 如果是查看他人，修改页面标题
+                document.title = `${displayedUserProfile.nickname || '用户'}的资料 - 心动匹配`;
+                // 统计数据区域已在 loadAndDisplayUserProfile 中隐藏
+            } else {
+                document.title = '个人中心 - 心动匹配';
+            }
+        }
+
+        // 填充表单数据
+        function populateForm(data) {
+            document.getElementById('displayName').textContent = data.nickname || data.username || '未设置'; // 使用 displayedUserProfile 的数据
+            document.getElementById('nickname').value = data.nickname || '';
+            document.getElementById('age').value = data.age || '';
+            document.getElementById('gender').value = data.gender || '';
+            document.getElementById('profession').value = data.profession || '';
+            // 省份和城市值将在initLocationSelectors中通过 displayedUserProfile 设置
+            document.getElementById('interests').value = data.interests || '';
+            document.getElementById('bio').value = data.bio || '';
+
+            let avatarSrc = data.avatar;
+            if (avatarSrc && typeof avatarSrc === 'string') {
+                document.getElementById('avatarImg').src = avatarSrc.startsWith('/') ? API_BASE_URL + avatarSrc : avatarSrc;
+            } else {
+                const defaultAvatarText = data.nickname ? data.nickname.substring(0,1) : (data.username ? data.username.substring(0,1) : '?');
+                document.getElementById('avatarImg').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(defaultAvatarText)}&background=random&size=120`;
+                if (avatarSrc !== null && avatarSrc !== undefined) {
+                    console.warn('Avatar URL is invalid or missing:', avatarSrc);
+                }
+            }
+            
+            // 卡片信息: /api/user/:id 可能不返回 cards，或返回的 cards 结构不同
+            // /api/profile 返回 cards: ["/path1", "/path2"]
+            // 假设 /api/user/:id 也返回类似结构的 cards (公开的卡片)
+            // 如果是查看他人profile且他人没有卡片，userCards会是空数组
+            userCards = data.cards || []; // 确保 userCards 是数组，即使 data.cards 未定义
+            renderCardGallery(); // 渲染卡片，即使是空数组
+        }
+
+        // 更新统计数据 (只在查看自己profile时调用)
+        function updateStats(data) {
+            document.getElementById('matchCount').textContent = data.match_count || 0;
+            document.getElementById('chatCount').textContent = data.chat_count || 0;
+            document.getElementById('cardCount').textContent = (data.cards && Array.isArray(data.cards)) ? data.cards.length : 0;
+        }
+
+        // 初始化卡片画廊
+        function initializeCardGallery() {
+            renderCardGallery();
+        }
+
+        // 渲染卡片画廊
+        function renderCardGallery() {
+            const gallery = document.getElementById('cardGallery');
+            gallery.innerHTML = '';
+
+            // 显示现有卡片
+            userCards.forEach((card, index) => {
+                const cardElement = createCardElement(card, index);
+                gallery.appendChild(cardElement);
+            });
+
+            // 如果卡片数量少于6张，显示添加按钮
+            if (userCards.length < 6) {
+                const addCard = document.createElement('div');
+                addCard.className = 'card-item';
+                addCard.onclick = () => document.getElementById('cardInput').click();
+                addCard.innerHTML = '<i class="fas fa-plus add-icon"></i>';
+                gallery.appendChild(addCard);
+            }
+        }
+
+        // 创建卡片元素
+        function createCardElement(cardUrl, index) {
+            const cardDiv = document.createElement('div');
+            cardDiv.className = 'card-item';
+            let displayUrl = 'https://via.placeholder.com/150x200?text=Invalid+Image'; // Default for invalid/null URLs
+
+            if (cardUrl && typeof cardUrl === 'string') { // Check if cardUrl is a non-null string
+                displayUrl = cardUrl.startsWith('/') ? API_BASE_URL + cardUrl : cardUrl;
+            } else {
+                console.warn(`Card URL at index ${index} is null or invalid:`, cardUrl);
+            }
+            
+            cardDiv.innerHTML = `
+                <img src="${displayUrl}" alt="卡片 ${index + 1}" onerror="this.src='https://via.placeholder.com/150x200?text=Error+Loading'; this.onerror=null;">
+                <button class="delete-btn" onclick="removeCard(${index})">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            return cardDiv;
+        }
+
+        // 移除卡片
+        function removeCard(index) {
+            if (confirm('确定要删除这张卡片吗？')) {
+                userCards.splice(index, 1);
+                renderCardGallery();
+                updateCardCount();
+            }
+        }
+
+        // 更新卡片数量
+        function updateCardCount() {
+            document.getElementById('cardCount').textContent = userCards.length;
+        }
+
+        // 设置事件监听器
+        function setupEventListeners() {
+            // 头像上传
+            document.getElementById('avatarInput').addEventListener('change', handleAvatarUpload);
+            
+            // 卡片上传
+            document.getElementById('cardInput').addEventListener('change', handleCardUpload);
+            
+            // 表单提交
+            document.getElementById('profileForm').addEventListener('submit', handleFormSubmit);
+        }
+
+        // 处理头像上传
+        async function handleAvatarUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                console.log('Original avatar file size:', file.size / 1024 / 1024, 'MB');
+                const options = {
+                    maxSizeMB: 0.48,
+                    maxWidthOrHeight: 1920,
+                    useWebWorker: true,
+                    onProgress: (p) => console.log(`Avatar compression progress: ${p}%`)
+                };
+                try {
+                    const compressedFile = await imageCompression(file, options);
+                    console.log('Compressed avatar file size:', compressedFile.size / 1024 / 1024, 'MB');
+                    if (compressedFile.size > 0.5 * 1024 * 1024) {
+                        alert('尝试压缩后头像文件仍然大于500KB，请选择更小的图片或降低图片质量。');
+                        event.target.value = ''; return;
+                    }
+
+                    const formData = new FormData();
+                    formData.append('file', compressedFile, compressedFile.name); // Pass filename for server-side secure_filename
+                    formData.append('upload_type', 'avatar');
+
+                    const token = localStorage.getItem('token');
+                    const response = await fetch(`${API_BASE_URL}/api/upload-image`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}` },
+                        body: formData
+                    });
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        // Display with full URL, but store the relative URL in displayedUserProfile.avatar
+                        document.getElementById('avatarImg').src = result.imageUrl.startsWith('/') ? API_BASE_URL + result.imageUrl : result.imageUrl;
+                        displayedUserProfile.avatar = result.imageUrl; // Store relative path as returned by API
+                        await savePartialProfile({ avatar: displayedUserProfile.avatar }); // Immediately save avatar
+                    } else {
+                        const errorResult = await response.json();
+                        alert(`头像上传失败: ${errorResult.message || '未知错误'}`);
+                        event.target.value = '';
+                    }
+                } catch (error) {
+                    console.error('Avatar processing error:', error);
+                    alert('头像处理失败，请重试或选择其他图片。');
+                    event.target.value = '';
+                }
+            }
+        }
+
+        // 处理卡片上传
+        async function handleCardUpload(event) {
+            const files = Array.from(event.target.files);
+            const remainingSlots = 6 - userCards.length;
+
+            if (files.length > remainingSlots) {
+                alert(`最多还能上传 ${remainingSlots} 张卡片`);
+                event.target.value = ''; return;
+            }
+
+            const options = {
+                maxSizeMB: 0.48,
+                maxWidthOrHeight: 1920,
+                useWebWorker: true
+            };
+            const token = localStorage.getItem('token');
+
+            for (const file of files) {
+                if (userCards.length >= 6) break;
+                console.log('Original card file size:', file.name, file.size / 1024 / 1024, 'MB');
+                try {
+                    const compressedFile = await imageCompression(file, options);
+                    console.log('Compressed card file size:', compressedFile.name, compressedFile.size / 1024 / 1024, 'MB');
+                    if (compressedFile.size > 0.5 * 1024 * 1024) {
+                        alert(`图片 ${file.name} 尝试压缩后仍然大于500KB，已跳过该图片。`);
+                        continue;
+                    }
+
+                    const formData = new FormData();
+                    formData.append('file', compressedFile, compressedFile.name);
+                    formData.append('upload_type', 'card');
+
+                    const response = await fetch(`${API_BASE_URL}/api/upload-image`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}` },
+                        body: formData
+                    });
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        userCards.push(result.imageUrl); // Use relative URL
+                        renderCardGallery();
+                        updateCardCount();
+                        await savePartialProfile({ cards: userCards }); // Immediately save cards
+                    } else {
+                        const errorResult = await response.json();
+                        alert(`图片 ${file.name} 上传失败: ${errorResult.message || '未知错误'}`);
+                    }
+                } catch (error) {
+                    console.error('Card processing error for file', file.name, error);
+                    alert(`图片 ${file.name} 处理失败，已跳过该图片。`);
+                }
+            }
+            event.target.value = '';
+        }
+
+        // 函数：部分保存用户资料 (例如只保存头像或卡片)
+        async function savePartialProfile(partialData) {
+            console.log('Attempting to save partial profile:', partialData);
+            const token = localStorage.getItem('token');
+            if (!token) {
+                console.error('No token found for partial save.');
+                // Optionally, alert the user or redirect to login
+                return;
+            }
+
+            // 合并现有用户资料（如果需要发送其他字段，但这里我们只发送部分）
+            // const fullPayload = { ...userProfile, ...partialData };
+            // For now, only send the partial data that changed.
+            // Backend needs to be ableto handle partial updates.
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/profile`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(partialData) // 只发送变化的部分
+                });
+
+                if (response.ok) {
+                    console.log('Partial profile saved successfully:', partialData);
+                    // Optionally, provide user feedback, e.g., a small toast message
+                } else {
+                    const error = await response.json();
+                    console.error('Partial save failed:', error.message || 'Unknown error');
+                    // Optionally, alert the user
+                    // alert('图片信息自动保存失败: ' + (error.message || '未知错误'));
+                }
+            } catch (error) {
+                console.error('Network error during partial save:', error);
+                // Optionally, alert the user
+                // alert('网络错误，图片信息自动保存失败');
+            }
+        }
+
+        // 处理表单提交
+        async function handleFormSubmit(event) {
+            event.preventDefault();
+
+            const formData = {
+                nickname: document.getElementById('nickname').value,
+                age: parseInt(document.getElementById('age').value) || null,
+                gender: document.getElementById('gender').value,
+                profession: document.getElementById('profession').value,
+                province: document.getElementById('province').value,
+                city: document.getElementById('city').value,
+                interests: document.getElementById('interests').value,
+                bio: document.getElementById('bio').value,
+                avatar: displayedUserProfile.avatar, // 使用 displayedUserProfile 中的头像路径
+                cards: userCards // userCards 数组已在上传/删除时更新
+            };
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/api/profile`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (response.ok) {
+                    alert('个人资料保存成功！');
+                    document.getElementById('displayName').textContent = formData.nickname || displayedUserProfile.username || '未设置';
+                    // 如果保存成功，可以考虑更新 displayedUserProfile 的本地副本
+                    // displayedUserProfile = { ...displayedUserProfile, ...formData }; // 简单合并
+                } else {
+                    const error = await response.json();
+                    alert('保存失败: ' + (error.message || '未知错误'));
+                }
+            } catch (error) {
+                console.error('保存错误:', error);
+                alert('网络错误，请检查连接后重试');
+            }
+        }
+
+        // 退出登录
+        function logout() {
+            if (confirm('确定要退出登录吗？')) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = 'login.html';
+            }
+        }
+    </script>
+</body>
+</html>

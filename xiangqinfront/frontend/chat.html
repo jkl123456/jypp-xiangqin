@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>私聊 - 心动匹配</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/theme-styles.css">
+    <script src="js/config.js"></script> <!-- 引入配置文件 -->
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden; /* 防止页面滚动 */
+        }
+
+        .container {
+            width: 100vw; /* 宽度拉满 */
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+            margin: 0;
+            position: relative;
+        }
+
+        .chat-header {
+            position: fixed; /* 头部固定在最上面 */
+            top: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-sizing: border-box;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            color: var(--text-glow-color);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            transition: background 0.3s;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .user-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--primary-glow-color);
+            box-shadow: 0 0 10px rgba(var(--primary-glow-color-rgb), 0.3);
+        }
+
+        .user-info h1 {
+            margin: 0;
+            color: var(--primary-glow-color);
+            font-size: 1.3rem;
+            text-shadow: 0 0 10px rgba(var(--primary-glow-color-rgb), 0.5);
+        }
+
+        .user-info p {
+            margin: 0;
+            color: rgba(var(--text-glow-color-rgb), 0.8);
+            font-size: 0.9rem;
+        }
+
+        .header-actions {
+            margin-left: auto;
+            display: flex;
+            gap: 10px;
+        }
+
+        .header-btn {
+            background: none;
+            border: 1px solid rgba(var(--primary-glow-color-rgb), 0.3);
+            color: var(--primary-glow-color);
+            padding: 8px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .header-btn:hover {
+            background: rgba(var(--primary-glow-color-rgb), 0.1);
+            border-color: var(--primary-glow-color);
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 80px 2.5vw 120px 2.5vw; /* 为固定的头部和底部预留空间, 左右2.5vw使内容区为95vw */
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            height: calc(100vh - 200px); /* 减去头部和底部的高度 */
+            box-sizing: border-box;
+        }
+
+        .message {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .message.own {
+            flex-direction: row-reverse;
+            margin-left: auto; /* 使自己的消息靠右对齐 */
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--primary-glow-color);
+            box-shadow: 0 0 10px rgba(var(--primary-glow-color-rgb), 0.3);
+        }
+
+        .message-content {
+            max-width: 90%; /* 增加消息内容区域的最大宽度 */
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            padding: 12px 16px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .message.own .message-content {
+            background: rgba(var(--primary-glow-color-rgb), 0.2);
+            border-color: rgba(var(--primary-glow-color-rgb), 0.3);
+        }
+
+        .message-text {
+            color: var(--text-glow-color);
+            line-height: 1.4;
+            margin-bottom: 5px;
+        }
+
+        .message-time {
+            color: rgba(var(--text-glow-color-rgb), 0.6);
+            font-size: 0.8rem;
+            text-align: right;
+        }
+
+        .message.own .message-time {
+            text-align: left;
+        }
+
+        .chat-input-container {
+            position: fixed; /* 底部固定在最下面 */
+            bottom: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            z-index: 1000;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            box-sizing: border-box;
+        }
+
+        .chat-input-form {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .chat-input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            padding: 12px 16px;
+            color: var(--text-glow-color);
+            font-size: 1rem;
+            resize: none;
+            min-height: 20px;
+            max-height: 100px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .chat-input:focus {
+            border-color: var(--primary-glow-color);
+            box-shadow: 0 0 10px rgba(var(--primary-glow-color-rgb), 0.3);
+        }
+
+        .chat-input::placeholder {
+            color: rgba(var(--text-glow-color-rgb), 0.5);
+        }
+
+        .send-btn {
+            background: var(--primary-glow-color);
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            color: white;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 0 15px rgba(var(--primary-glow-color-rgb), 0.5);
+        }
+
+        .send-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(var(--primary-glow-color-rgb), 0.7);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            color: rgba(var(--text-glow-color-rgb), 0.6);
+            font-style: italic;
+            position: fixed;
+            bottom: 85px; /* 在输入框上方 */
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            z-index: 999;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 3px;
+        }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--primary-glow-color);
+            border-radius: 50%;
+            animation: typing 1.5s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                opacity: 0.3;
+                transform: scale(0.8);
+            }
+            30% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* 滚动条样式 */
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: rgba(var(--primary-glow-color-rgb), 0.5);
+            border-radius: 3px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: rgba(var(--primary-glow-color-rgb), 0.7);
+        }
+    </style>
+</head>
+<body class="theme-active">
+    <div class="tech-beams-background">
+        <div class="beam beam-1"></div>
+        <div class="beam beam-2"></div>
+        <div class="beam beam-3"></div>
+        <div class="beam beam-4"></div>
+    </div>
+
+    <div class="container">
+        <!-- 聊天头部 -->
+        <div class="chat-header">
+            <button class="back-btn" onclick="window.location.href='chat-list.html'">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <img id="user-avatar" src="https://via.placeholder.com/45x45" alt="Avatar" class="user-avatar">
+            <div class="user-info">
+                <h1 id="user-name">加载中...</h1>
+                <p id="user-status">在线</p>
+            </div>
+            <div class="header-actions">
+                <button class="header-btn" onclick="viewProfile()">
+                    <i class="fas fa-user"></i> 资料
+                </button>
+            </div>
+        </div>
+
+        <!-- 聊天消息区域 -->
+        <div class="chat-messages" id="chat-messages">
+            <!-- 消息将通过JS动态加载 -->
+        </div>
+
+        <!-- 正在输入指示器 -->
+        <div class="typing-indicator" id="typing-indicator">
+            <span id="typing-user">对方</span> 正在输入
+            <div class="typing-dots">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            </div>
+        </div>
+
+        <!-- 输入区域 -->
+        <div class="chat-input-container">
+            <form class="chat-input-form" id="chat-form">
+                <textarea 
+                    class="chat-input" 
+                    id="chat-input" 
+                    placeholder="输入消息..." 
+                    rows="1"
+                ></textarea>
+                <button type="submit" class="send-btn" id="send-btn">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // 获取URL参数
+        const urlParams = new URLSearchParams(window.location.search);
+        const targetUserId = urlParams.get('id');
+        
+        // WebSocket连接
+        let ws = null;
+        let currentUser = null;
+        let targetUser = null;
+
+        // 页面元素
+        const userAvatarEl = document.getElementById('user-avatar');
+        const userNameEl = document.getElementById('user-name');
+        const userStatusEl = document.getElementById('user-status');
+        const chatMessagesEl = document.getElementById('chat-messages');
+        const chatInputEl = document.getElementById('chat-input');
+        const sendBtnEl = document.getElementById('send-btn');
+        const chatFormEl = document.getElementById('chat-form');
+        const typingIndicatorEl = document.getElementById('typing-indicator');
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!targetUserId) {
+                alert('缺少用户ID参数');
+                history.back();
+                return;
+            }
+
+            // 检查登录状态
+            await checkAuth();
+            
+            // 加载目标用户信息
+            await loadTargetUser();
+            
+            // 连接WebSocket
+            connectWebSocket();
+            
+            // 加载聊天记录
+            await loadChatHistory();
+            
+            // 设置事件监听器
+            setupEventListeners();
+        });
+
+        // 检查用户认证
+        async function checkAuth() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('请先登录');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            try {
+                const response = await fetch('http://14.103.133.136:5000/api/user/profile', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    currentUser = await response.json();
+                } else {
+                    throw new Error('认证失败');
+                }
+            } catch (error) {
+                console.error('认证错误:', error);
+                alert('登录已过期，请重新登录');
+                localStorage.removeItem('token');
+                window.location.href = 'login.html';
+            }
+        }
+
+        // 加载目标用户信息
+        async function loadTargetUser() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`http://14.103.133.136:5000/api/user/${targetUserId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    targetUser = await response.json();
+                    userNameEl.textContent = targetUser.nickname;
+                    let avatarSrc = targetUser.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(targetUser.nickname)}&background=random`;
+                    if (targetUser.avatar && !targetUser.avatar.startsWith('http') && !targetUser.avatar.startsWith('assets/')) {
+                        avatarSrc = `${CONFIG.API_BASE_URL}${targetUser.avatar}`;
+                    }
+                    userAvatarEl.src = avatarSrc;
+                    userAvatarEl.alt = targetUser.nickname;
+                } else {
+                    throw new Error('加载用户信息失败');
+                }
+            } catch (error) {
+                console.error('加载用户信息错误:', error);
+                alert('加载用户信息失败');
+                history.back();
+            }
+        }
+
+        // 连接WebSocket
+        function connectWebSocket() {
+            const token = localStorage.getItem('token');
+            ws = new WebSocket(`ws://14.103.133.136:8766?token=${token}`);
+
+            ws.onopen = () => {
+                console.log('WebSocket连接已建立');
+                // 简化私聊逻辑，直接发送 join_private_chat 消息
+                ws.send(JSON.stringify({
+                    type: 'join_private_chat',
+                    target_user_id: targetUserId
+                }));
+                console.log(`已发送私聊连接请求，目标用户ID: ${targetUserId}`);
+
+                // 标记消息为已读
+                if (targetUserId) {
+                    ws.send(JSON.stringify({
+                        type: 'mark_as_read',
+                        sender_id: parseInt(targetUserId) // 对方是发送者
+                    }));
+                    console.log(`已发送标记已读请求，对方用户ID: ${targetUserId}`);
+                }
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                handleWebSocketMessage(data);
+            };
+
+            ws.onclose = () => {
+                console.log('WebSocket连接已关闭');
+                // 尝试重连
+                setTimeout(connectWebSocket, 3000);
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket错误:', error);
+            };
+        }
+
+        // 处理WebSocket消息
+        function handleWebSocketMessage(data) {
+            console.log("Received WebSocket message:", data); // 增加日志
+            switch (data.type) {
+                case 'match_session_confirmed':
+                    console.log('Match session confirmed by server:', data);
+                    // 可以在这里做一些UI更新，比如显示“已连接到聊天室”
+                    // 如果需要，可以触发加载历史记录等操作，但目前这些操作在DOMContentLoaded中
+                    break;
+                case 'private_message':
+                    addMessage(data);
+                    break;
+                case 'user_typing':
+                    if (data.user_id == targetUserId) {
+                        showTypingIndicator();
+                    }
+                    break;
+                case 'user_stop_typing':
+                    if (data.user_id == targetUserId) {
+                        hideTypingIndicator();
+                    }
+                    break;
+                case 'user_status':
+                    if (data.user_id == targetUserId) {
+                        userStatusEl.textContent = data.status === 'online' ? '在线' : '离线';
+                    }
+                    break;
+                case 'messages_marked_read': // 虽然主要在chat-list处理，但这里也可以记录一下
+                    console.log('Messages marked as read confirmation received:', data);
+                    // 可以在这里触发一些UI更新，比如清除本地的未读角标（如果聊天页面有的话）
+                    break;
+                case 'unread_count_update': // 如果聊天页面也需要显示总未读数，可以在这里处理
+                    console.log('Total unread count updated on chat page:', data.count);
+                    // 例如: document.getElementById('some-global-unread-badge').textContent = data.count;
+                    break;
+            }
+        }
+
+        // 加载聊天记录
+        async function loadChatHistory() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`http://14.103.133.136:5000/api/chat/history?user_id=${targetUserId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const messages = await response.json();
+                    messages.forEach(addMessage);
+                    scrollToBottom();
+                }
+            } catch (error) {
+                console.error('加载聊天记录失败:', error);
+            }
+        }
+
+        // 添加消息到聊天界面
+        function addMessage(messageData) {
+            console.log("[CHAT.HTML DEBUG] addMessage called with raw messageData:", JSON.stringify(messageData));
+            if (currentUser) {
+                console.log("[CHAT.HTML DEBUG] currentUser.id:", currentUser.id, "(type:", typeof currentUser.id + ")");
+            } else {
+                console.log("[CHAT.HTML DEBUG] currentUser is null or undefined at addMessage call.");
+            }
+            console.log("[CHAT.HTML DEBUG] messageData.sender_id:", messageData.sender_id, "(type:", typeof messageData.sender_id + ")");
+
+            const messageEl = document.createElement('div');
+            // Ensure currentUser and its id are available for comparison
+            const currentUserIdForComparison = currentUser ? currentUser.id : null;
+            const isOwnMessage = currentUserIdForComparison !== null && messageData.sender_id == currentUserIdForComparison;
+            
+            console.log("[CHAT.HTML DEBUG] isOwnMessage evaluation:", isOwnMessage);
+
+            messageEl.className = `message ${isOwnMessage ? 'own' : ''}`;
+            
+            let avatarUrl;
+            let profileLinkUserId;
+
+            if (isOwnMessage) {
+                avatarUrl = currentUser.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.nickname)}&background=random`;
+                if (currentUser.avatar && !currentUser.avatar.startsWith('http') && !currentUser.avatar.startsWith('assets/')) {
+                    avatarUrl = `${CONFIG.API_BASE_URL}${currentUser.avatar}`;
+                }
+                profileLinkUserId = currentUser.id;
+            } else {
+                // For avatar display, we can still use targetUser.avatar as it's loaded for the chat partner
+                avatarUrl = targetUser.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(targetUser.nickname)}&background=random`;
+                if (targetUser.avatar && !targetUser.avatar.startsWith('http') && !targetUser.avatar.startsWith('assets/')) {
+                    avatarUrl = `${CONFIG.API_BASE_URL}${targetUser.avatar}`;
+                }
+                // For profile link, use the sender_id from the message data itself
+                profileLinkUserId = messageData.sender_id; 
+            }
+            
+            console.log("[CHAT.HTML DEBUG] profileLinkUserId for this message:", profileLinkUserId);
+            
+            messageEl.innerHTML = `
+                <img src="${avatarUrl}" alt="Avatar" class="message-avatar" style="cursor: pointer;" onclick="viewProfileById(${profileLinkUserId})" onerror="this.src='https://ui-avatars.com/api/?name=User&background=random'">
+                <div class="message-content">
+                    <div class="message-text">${escapeHtml(messageData.message)}</div>
+                    <div class="message-time">${formatTime(messageData.created_at)}</div>
+                </div>
+            `;
+            
+            chatMessagesEl.appendChild(messageEl);
+            scrollToBottom();
+        }
+
+        // 设置事件监听器
+        function setupEventListeners() {
+            // 发送消息
+            chatFormEl.addEventListener('submit', (e) => {
+                e.preventDefault();
+                sendMessage();
+            });
+
+            // 输入框自动调整高度
+            chatInputEl.addEventListener('input', () => {
+                chatInputEl.style.height = 'auto';
+                chatInputEl.style.height = Math.min(chatInputEl.scrollHeight, 100) + 'px';
+                
+                // 显示正在输入状态
+                if (ws && chatInputEl.value.trim()) {
+                    ws.send(JSON.stringify({
+                        type: 'typing',
+                        target_user_id: targetUserId
+                    }));
+                }
+            });
+
+            // 停止输入状态
+            let typingTimeout;
+            chatInputEl.addEventListener('input', () => {
+                clearTimeout(typingTimeout);
+                typingTimeout = setTimeout(() => {
+                    if (ws) {
+                        ws.send(JSON.stringify({
+                            type: 'stop_typing',
+                            target_user_id: targetUserId
+                        }));
+                    }
+                }, 1000);
+            });
+
+            // 回车发送消息
+            chatInputEl.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+        }
+
+        // 发送消息
+        function sendMessage() {
+            const message = chatInputEl.value.trim();
+            if (!message || !ws) return;
+
+            ws.send(JSON.stringify({
+                type: 'private_message',
+                target_user_id: targetUserId,
+                message: message
+            }));
+
+            chatInputEl.value = '';
+            chatInputEl.style.height = 'auto';
+            sendBtnEl.disabled = false;
+        }
+
+        // 显示正在输入指示器
+        function showTypingIndicator() {
+            typingIndicatorEl.style.display = 'flex';
+        }
+
+        // 隐藏正在输入指示器
+        function hideTypingIndicator() {
+            typingIndicatorEl.style.display = 'none';
+        }
+
+        // 滚动到底部
+        function scrollToBottom() {
+            chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+        }
+
+        // 查看用户资料 (通过 targetUserId，用于头部按钮)
+        function viewProfile() {
+            window.open(`profile.html?id=${targetUserId}`, '_blank');
+        }
+
+        // 查看指定ID的用户资料 (用于消息内头像点击)
+        function viewProfileById(userId) {
+            if (userId) {
+                window.open(`profile.html?id=${userId}`, '_blank');
+            }
+        }
+
+        // 格式化时间
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diffInHours = (now - date) / (1000 * 60 * 60);
+
+            if (diffInHours < 24) {
+                return date.toLocaleTimeString('zh-CN', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+            } else {
+                return date.toLocaleDateString('zh-CN', { 
+                    month: 'short', 
+                    day: 'numeric',
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+            }
+        }
+
+        // HTML转义
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>

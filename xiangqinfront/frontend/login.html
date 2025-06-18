@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>心动匹配 - 登录</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css"> <!-- General styles -->
+    <link rel="stylesheet" href="css/theme-styles.css"> <!-- Theme specific styles -->
+    <style>
+        /* Styles specific to login.html */
+        /* Body padding for fixed header/footer is handled by theme-styles.css */
+        /* This container is inside body, so it should respect body's padding */
+        .container { 
+             max-width: 500px; 
+             margin: 0 auto; /* Centered, body padding will give top/bottom space */
+             padding: 1rem; /* Padding for content within this container */
+             /* padding-bottom: 70px; Removed, FAB positioning is fixed relative to viewport */
+             display: flex;
+             flex-direction: column;
+             min-height: calc(100vh - 120px); /* Fill available height considering body's top/bottom padding */
+             box-sizing: border-box;
+        }
+        header { /* Basic header structure for login page, not fixed like index.html */
+            display: flex;
+            justify-content: space-between; 
+            align-items: center;
+            padding: 10px 0; /* Vertical padding, horizontal alignment by content */
+            margin-bottom: 1rem; /* Space below header */
+            width: 100%; /* Ensure header takes full width of its container */
+        }
+        /* .logo will be themed by theme-styles.css */
+
+        .login-container { /* Themed form container */
+            max-width: 450px; /* Slightly narrower for login form */
+            margin: 2rem auto; /* Increased top/bottom margin for better spacing */
+            padding: 2.5rem; /* Increased padding */
+            background: rgba(var(--primary-glow-color-rgb, 196, 113, 237), 0.04); /* Slightly adjusted background */
+            border: 1px solid rgba(var(--primary-glow-color-rgb, 196, 113, 237),0.2); /* Slightly stronger border */
+            border-radius: 15px; /* More rounded corners */
+            box-shadow: 0 8px 30px rgba(var(--primary-glow-color-rgb, 196, 113, 237), 0.1), 0 4px 10px rgba(0,0,0,0.15); /* Softer, themed shadow */
+            width: 100%; /* Ensure it takes available width up to max-width */
+            box-sizing: border-box;
+        }
+        
+        .login-header {
+            text-align: center;
+            margin-bottom: 2.5rem; /* Increased margin */
+        }
+        
+        .login-header h1 { /* Themed heading */
+            color: var(--primary-glow-color);
+            font-size: 2.2rem; /* Slightly larger */
+            text-shadow: 0 0 10px rgba(var(--primary-glow-color-rgb, 196, 113, 237), 0.5);
+            margin-bottom: 0.75rem; /* Space below h1 */
+        }
+         .login-header p {
+            color: var(--text-glow-color);
+            opacity: 0.85; /* Slightly more opaque */
+            font-size: 1rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.8rem; /* Increased margin */
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.6rem; /* Increased margin */
+            font-weight: 600;
+            color: var(--text-glow-color);
+            opacity: 0.9;
+            font-size: 0.95rem; /* Slightly adjusted font size */
+        }
+        
+        .theme-active-input { /* Styling for inputs with this class */
+            width: 100%;
+            padding: 14px 18px; /* Increased padding */
+            font-size: 1rem;
+            color: var(--text-glow-color);
+            background-color: rgba(var(--secondary-glow-color-rgb, 98, 83, 255), 0.08); /* Using secondary color for input bg */
+            border: 1px solid rgba(var(--secondary-glow-color-rgb, 98, 83, 255), 0.4); /* Secondary color border */
+            border-radius: 8px;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .theme-active-input::placeholder {
+            color: rgba(var(--text-glow-color-rgb, 240, 217, 255), 0.5);
+            opacity: 1; /* Ensure placeholder is visible */
+        }
+
+        .theme-active-input:focus {
+            outline: none;
+            border-color: var(--primary-glow-color);
+            box-shadow: 0 0 10px rgba(var(--primary-glow-color-rgb, 196, 113, 237), 0.4);
+        }
+        
+        .btn-login { /* This class is on the button, .theme-active-btn provides base theme */
+            width: 100%;
+            padding: 14px; /* Increased padding */
+            font-size: 1.1rem;
+            font-weight: 700; /* Bolder */
+            border-radius: 8px; /* Match input fields */
+            transition: background-color 0.3s ease, transform 0.2s ease; 
+        }
+        .btn-login:active {
+            transform: scale(0.98); /* Click feedback */
+        }
+        
+        .register-link, .forgot-password {
+            text-align: center;
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+        }
+        .register-link a, .forgot-password a { /* Themed links */
+            color: var(--secondary-glow-color);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        .register-link a:hover, .forgot-password a:hover {
+            color: var(--primary-glow-color);
+            text-decoration: underline;
+        }
+        .forgot-password {
+             margin-top: 0.8rem;
+             text-align: right;
+        }
+    </style>
+</head>
+<body class="theme-active">
+    <div class="tech-beams-background"> <!-- Added for theme consistency -->
+        <div class="beam beam-1"></div>
+        <div class="beam beam-2"></div>
+        <div class="beam beam-3"></div>
+        <div class="beam beam-4"></div>
+    </div>
+    <div class="container">
+        <header>
+            <div class="logo theme-active-logo">
+                <i class="fas fa-heart"></i>
+                <span>心动匹配</span>
+            </div>
+        </header>
+
+        <div class="login-container theme-active-card"> <!-- Added theme-active-card -->
+            <div class="login-header">
+                <h1>欢迎回来</h1>
+                <p>登录心动匹配，继续你的缘分之旅</p>
+            </div>
+            
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="email">邮箱地址</label>
+                    <input type="email" id="email" required placeholder="请输入您的邮箱" class="theme-active-input">
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">密码</label>
+                    <input type="password" id="password" required placeholder="请输入密码" class="theme-active-input">
+                </div>
+                
+                <div class="forgot-password">
+                    <a href="#">忘记密码？</a>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-login theme-active-btn">登录</button>
+            </form>
+            
+            <div class="register-link">
+                <p>还没有账户？ <a href="register.html">立即注册</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Action Button for Theme -->
+    <button class="fab-theme-button" id="fabThemeButton" aria-label="打开颜色选择器">
+        <i class="fas fa-palette"></i>
+    </button>
+
+    <!-- Color Drawer -->
+    <div class="color-drawer" id="colorDrawer">
+        <h4>选择主题颜色</h4>
+        <div class="color-options" id="colorOptionsContainer">
+            <!-- Color options will be populated by JavaScript -->
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('login-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            if (!email || !password) {
+                alert('请填写所有字段');
+                return;
+            }
+            
+        try {
+                const response = await fetch('http://14.103.133.136:5000/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    alert('登录成功！');
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user_id', data.user_id);
+                    localStorage.setItem('nickname', data.nickname);
+                    
+                    // 跳转到首页
+                    window.location.href = 'index.html';
+                } else {
+                    alert('登录失败：' + data.message);
+                }
+            } catch (error) {
+                console.error('登录错误:', error);
+                alert('网络错误，请检查连接后重试');
+            }
+        });
+
+        // Theme Switcher Logic
+        document.addEventListener('DOMContentLoaded', () => {
+            const fabThemeButton = document.getElementById('fabThemeButton');
+            const colorDrawer = document.getElementById('colorDrawer');
+            const colorOptionsContainer = document.getElementById('colorOptionsContainer');
+            const root = document.documentElement;
+
+            if (fabThemeButton && colorDrawer && colorOptionsContainer) { // Ensure elements exist
+                function hexToRgb(hex) {
+                    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                    return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null;
+                }
+
+                function setRgbCssVars() {
+                    const rootStyles = getComputedStyle(document.documentElement);
+                    const primaryGlowHex = rootStyles.getPropertyValue('--primary-glow-color').trim();
+                    const secondaryGlowHex = rootStyles.getPropertyValue('--secondary-glow-color').trim();
+                    const textGlowHex = rootStyles.getPropertyValue('--text-glow-color').trim();
+
+                    const primaryGlowRgb = hexToRgb(primaryGlowHex);
+                    const secondaryGlowRgb = hexToRgb(secondaryGlowHex);
+                    const textGlowRgb = hexToRgb(textGlowHex);
+
+                    if (primaryGlowRgb) document.documentElement.style.setProperty('--primary-glow-color-rgb', `${primaryGlowRgb.r},${primaryGlowRgb.g},${primaryGlowRgb.b}`);
+                    if (secondaryGlowRgb) document.documentElement.style.setProperty('--secondary-glow-color-rgb', `${secondaryGlowRgb.r},${secondaryGlowRgb.g},${secondaryGlowRgb.b}`);
+                    if (textGlowRgb) document.documentElement.style.setProperty('--text-glow-color-rgb', `${textGlowRgb.r},${textGlowRgb.g},${textGlowRgb.b}`);
+                }
+                setRgbCssVars();
+
+                const themes = [
+                    { name: 'Default Purple', primary: '#c471ed', secondary: '#6253FF', text: '#f0d9ff', tip: '#ffffff' },
+                    { name: 'Cyber Blue', primary: '#00e0ff', secondary: '#0077ff', text: '#e0f7ff', tip: '#ffffff' },
+                    { name: 'Synth Pink', primary: '#ff00aa', secondary: '#c500ff', text: '#ffe0f5', tip: '#ffffff' },
+                    { name: 'Emerald Green', primary: '#00ffaa', secondary: '#00aa7f', text: '#e0fff5', tip: '#ffffff' },
+                    { name: 'Solar Orange', primary: '#ffaa00', secondary: '#ff7700', text: '#fff5e0', tip: '#ffffff' },
+                    { name: 'Ruby Red', primary: '#ff0055', secondary: '#aa003c', text: '#ffe0e8', tip: '#ffffff' }
+                ];
+                let currentTheme = themes[0];
+
+                function applyTheme(theme) {
+                    root.style.setProperty('--primary-glow-color', theme.primary);
+                    root.style.setProperty('--secondary-glow-color', theme.secondary);
+                    root.style.setProperty('--text-glow-color', theme.text);
+                    root.style.setProperty('--fiber-tip-highlight', theme.tip);
+                    setRgbCssVars();
+                    currentTheme = theme;
+                    localStorage.setItem('selectedTheme', JSON.stringify(theme));
+                    updateActiveColorOption();
+                }
+
+                function loadTheme() {
+                    const savedTheme = localStorage.getItem('selectedTheme');
+                    if (savedTheme) {
+                        applyTheme(JSON.parse(savedTheme));
+                    } else {
+                        applyTheme(themes[0]);
+                    }
+                }
+
+                function updateActiveColorOption() {
+                    const options = colorOptionsContainer.querySelectorAll('.color-option');
+                    options.forEach(opt => {
+                        opt.classList.toggle('active', opt.dataset.primary === currentTheme.primary);
+                    });
+                }
+
+                themes.forEach(theme => {
+                    const option = document.createElement('div');
+                    option.className = 'color-option';
+                    option.dataset.primary = theme.primary;
+                    const span = document.createElement('span');
+                    span.style.background = `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`;
+                    option.appendChild(span);
+                    option.setAttribute('title', theme.name);
+                    option.addEventListener('click', () => applyTheme(theme));
+                    colorOptionsContainer.appendChild(option);
+                });
+
+                fabThemeButton.addEventListener('click', () => colorDrawer.classList.toggle('open'));
+                document.addEventListener('click', (event) => {
+                    if (!colorDrawer.contains(event.target) && !fabThemeButton.contains(event.target) && colorDrawer.classList.contains('open')) {
+                        colorDrawer.classList.remove('open');
+                    }
+                });
+                loadTheme();
+            }
+        });
+    </script>
+</body>
+</html>

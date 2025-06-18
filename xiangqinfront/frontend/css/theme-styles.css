@@ -1,0 +1,251 @@
+:root {
+    --primary-glow-color: #c471ed;
+    --secondary-glow-color: #6253FF;
+    --text-glow-color: #f0d9ff;
+    --fiber-tip-highlight: #ffffff; /* Added for the tip */
+    /* RGB versions will be set by JavaScript */
+}
+
+body.theme-active { /* Add a class to body to activate theme */
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    background-color: #050210;
+    color: #e0e0e0;
+    overflow-x: hidden;
+    /* Add padding for fixed header and footer */
+    padding-top: 60px; /* Adjust based on actual header height */
+    padding-bottom: 60px; /* Adjust based on actual bottom-nav height */
+}
+
+/* Main Header Styling */
+/* Targets the <header> inside <div class="container"> in index.html */
+body.theme-active > .container > header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: rgba(15, 12, 30, 0.85); /* Darker, slightly transparent background */
+    backdrop-filter: blur(10px); /* Frosted glass effect */
+   
+    z-index: 1000; /* Above most content, below FAB drawer if it overlaps */
+    border-bottom: 1px solid rgba(var(--primary-glow-color-rgb), 0.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0; /* Remove margin since it's fixed */
+    box-sizing: border-box; /* Ensure padding doesn't add to width */
+}
+/* Ensure that the direct children of the fixed header (logo and user-actions)
+   are spaced correctly. The padding on the header itself should manage this.
+   If .logo or .user-actions need specific alignment, they can be styled here.
+*/
+body.theme-active > .container > header .logo span {
+    font-size: 1.2em; /* Example adjustment */
+}
+body.theme-active > .container > header .user-actions .btn {
+    padding: 0.5em 1em; /* Example adjustment */
+    font-size: 0.9em;
+}
+
+/* Glow effects from index.html */
+.tech-beams-background {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: -10; overflow: hidden;
+}
+.beam {
+    position: absolute; width: 250px; height: 250px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(var(--primary-glow-color-rgb, 196, 113, 237),0.05), transparent 70%);
+    opacity: 0; animation: beamMove 12s infinite ease-in-out;
+}
+.beam-1 { top: 15%; left: 15%; animation-delay: 0s; width: 350px; height: 350px;}
+.beam-2 { top: 30%; left: 75%; animation-delay: 3s; width: 250px; height: 250px;}
+.beam-3 { top: 70%; left: 20%; animation-delay: 6s; width: 400px; height: 400px;}
+.beam-4 { top: 60%; left: 85%; animation-delay: 2s; width: 200px; height: 200px; background: radial-gradient(circle, rgba(var(--secondary-glow-color-rgb, 98, 83, 255),0.05), transparent 70%);}
+
+@keyframes beamMove {
+    0%, 100% { transform: scale(0.5) translate(-40%, -40%); opacity: 0.03; }
+    50% { transform: scale(1.2) translate(5%, 5%); opacity: 0.1; }
+}
+
+/* Styles for buttons and other elements that should adopt the theme */
+.btn-outline.theme-active-btn {
+    border: 1px solid var(--primary-glow-color); color: var(--primary-glow-color);
+    background-color: transparent;
+    box-shadow: 0 0 10px rgba(var(--primary-glow-color-rgb, 196, 113, 237), 0.3);
+}
+.btn-outline.theme-active-btn:hover { background-color: rgba(var(--primary-glow-color-rgb, 196, 113, 237), 0.2); }
+
+.btn-primary.theme-active-btn {
+    background-color: var(--primary-glow-color); color: #050210;
+    border: 1px solid var(--primary-glow-color); font-weight: bold;
+    box-shadow: 0 0 10px rgba(var(--primary-glow-color-rgb, 196, 113, 237), 0.3);
+}
+.btn-primary.theme-active-btn:hover {
+    background-color: color-mix(in srgb, var(--primary-glow-color), #000000 10%); /* Darken primary color on hover */
+}
+
+.logo.theme-active-logo {
+    color: var(--primary-glow-color);
+    text-shadow: 0 0 8px var(--primary-glow-color);
+}
+
+.feature-card.theme-active-card {
+    background: rgba(var(--primary-glow-color-rgb, 196, 113, 237), 0.03);
+    border: 1px solid rgba(var(--primary-glow-color-rgb, 196, 113, 237),0.15);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+.feature-card.theme-active-card:hover {
+    transform: translateY(-7px) scale(1.03);
+    box-shadow: 0 10px 25px rgba(var(--primary-glow-color-rgb, 196, 113, 237), 0.15);
+    border-color: rgba(var(--primary-glow-color-rgb, 196, 113, 237), 0.4);
+    background: rgba(var(--primary-glow-color-rgb, 196, 113, 237), 0.06);
+}
+.feature-card.theme-active-card .feature-title { color: #e8e8e8; }
+.feature-card.theme-active-card p { color: #a0a0a0; }
+
+
+.tech-sphere.theme-active-sphere {
+    background: radial-gradient(circle at 30% 30%, var(--secondary-glow-color), var(--primary-glow-color));
+    box-shadow: 0 0 12px rgba(var(--primary-glow-color-rgb, 196, 113, 237), 0.5);
+}
+.tech-sphere.theme-active-sphere::before { background: radial-gradient(circle at 70% 70%, rgba(255,255,255,0.15), transparent 60%); }
+.tech-sphere.theme-active-sphere::after { background: conic-gradient(transparent, rgba(255,255,255,0.1), transparent); }
+
+
+/* Bottom Nav Theming */
+.bottom-nav.theme-active-nav {
+    background: rgba(15, 12, 30, 0.85); /* Consistent with header */
+    backdrop-filter: blur(10px); /* Frosted glass effect */
+    border-top: 1px solid rgba(var(--primary-glow-color-rgb), 0.2);
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 999; /* Below FAB and its drawer, above page content */
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 8px 0; /* Vertical padding, horizontal handled by space-around */
+    box-sizing: border-box;
+}
+.bottom-nav.theme-active-nav .nav-item {
+    color: #aaa; /* Slightly lighter for better visibility on darker bg */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 0.75rem;
+    transition: color 0.3s ease;
+    background-color: transparent; /* Ensure no background by default */
+    padding: 5px; /* Add some padding to make touch targets slightly larger if needed */
+    border-radius: 4px; /* Optional: if a very subtle hover effect was ever desired */
+}
+.bottom-nav.theme-active-nav .nav-item i {
+    font-size: 1.2rem; /* Icon size */
+    margin-bottom: 4px;
+}
+.bottom-nav.theme-active-nav .nav-item.active {
+    color: var(--text-glow-color);
+    text-shadow: 0 0 5px var(--text-glow-color);
+    background-color: transparent !important; /* Explicitly no background for active item */
+}
+.bottom-nav.theme-active-nav .nav-item:hover {
+    color: var(--primary-glow-color);
+    background-color: transparent; /* Ensure no background on hover */
+}
+
+/* Styles for the floating action button (FAB) and color drawer */
+.fab-theme-button {
+    position: fixed;
+    bottom: 80px; /* Adjust as needed, above bottom-nav */
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    background-color: var(--primary-glow-color);
+    color: #fff;
+    border-radius: 50%;
+    border: none;
+    box-shadow: 0 4px 12px rgba(var(--primary-glow-color-rgb, 196, 113, 237), 0.4), 0 0 20px rgba(var(--primary-glow-color-rgb, 196, 113, 237), 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 1001; /* Above bottom-nav */
+    transition: transform 0.3s ease, background-color 0.3s ease;
+}
+
+.fab-theme-button:hover {
+    transform: scale(1.1);
+    background-color: color-mix(in srgb, var(--primary-glow-color), #000000 10%);
+}
+
+.color-drawer {
+    position: fixed;
+    bottom: 145px; /* Position above FAB */
+    right: 20px;
+    width: 200px;
+    background-color: rgba(30, 30, 50, 0.9);
+    backdrop-filter: blur(10px);
+    border-radius: 8px;
+    box-shadow: 0 -2px 15px rgba(0,0,0,0.3);
+    padding: 15px;
+    z-index: 1000;
+    transform: translateY(120%); /* Hidden by default */
+    visibility: hidden; /* Ensure it's hidden */
+    opacity: 0; /* Ensure it's transparent */
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s ease, visibility 0.4s ease;
+    border: 1px solid rgba(var(--primary-glow-color-rgb, 196, 113, 237),0.2);
+}
+
+.color-drawer.open {
+    transform: translateY(0);
+    visibility: visible; /* Make it visible when open */
+    opacity: 1; /* Make it opaque when open */
+}
+
+.color-drawer h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: var(--text-glow-color);
+    font-size: 1rem;
+    text-align: center;
+}
+
+.color-options {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.color-option {
+    width: 100%;
+    padding-top: 100%; /* Creates a square */
+    position: relative;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: border-color 0.3s ease;
+}
+.color-option.active {
+    border-color: var(--fiber-tip-highlight);
+    box-shadow: 0 0 8px var(--fiber-tip-highlight);
+}
+.color-option span {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    border-radius: 50%;
+}
+
+/* Fix for select dropdown option visibility */
+body.theme-active select option {
+    background-color: #050210; /* Match body background or a dark color */
+    color: #e0e0e0; /* Ensure text is light */
+}
+
+body.theme-active select {
+    background-color: rgba(255, 255, 255, 0.1); /* Light background for the select box itself */
+    color: #e0e0e0; /* Light text for the select box */
+    border: 1px solid rgba(var(--primary-glow-color-rgb), 0.5);
+    padding: 8px;
+    border-radius: 4px;
+}

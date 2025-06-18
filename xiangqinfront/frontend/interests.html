@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>心动匹配 - 兴趣发现</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css"> <!-- General styles -->
+    <link rel="stylesheet" href="css/theme-styles.css"> <!-- Theme specific styles -->
+    <style>
+        /* Styles specific to interests.html */
+        .container { /* Adjust container for this page */
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 15px;
+            /* padding-bottom: 70px; */ /* Space for bottom nav + FAB */
+        }
+
+        header { /* Basic header structure */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            margin-bottom: 15px;
+        }
+        /* .logo, .user-actions .btn will be themed by theme-styles.css */
+
+        .interests-container {
+            text-align: center;
+        }
+        .interests-container h1 { /* Themed heading */
+            font-size: 28px;
+            color: var(--text-glow-color);
+            margin-bottom: 25px;
+            text-shadow: 0 0 5px rgba(var(--primary-glow-color-rgb, 196, 113, 237), 0.5);
+        }
+
+        .interests-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* Always 3 columns for nine-patch style */
+            gap: 15px; /* Adjust gap as needed */
+            max-width: 700px; /* Max width for the grid itself to maintain shape */
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .interest-card { 
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px; /* Uniform padding */
+            aspect-ratio: 1 / 1; /* Make cards square */
+            justify-content: center; 
+            box-sizing: border-box; /* Include padding and border in the element's total width and height */
+        }
+
+        .interest-card .icon-container { 
+            background: rgba(var(--primary-glow-color-rgb, 196, 113, 237), 0.08);
+            width: 60%; /* Relative to card width */
+            padding-bottom: 60%; /* For square aspect ratio, same as width */
+            height: 0; /* Required for padding-bottom to work for aspect ratio */
+            border-radius: 50%; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 10px; 
+            border: 2px solid rgba(var(--primary-glow-color-rgb, 196, 113, 237),0.2);
+            transition: background 0.3s, border-color 0.3s;
+            position: relative; /* For absolute positioning of icon */
+        }
+        .interest-card:hover .icon-container {
+            background: rgba(var(--primary-glow-color-rgb, 196, 113, 237), 0.15);
+            border-color: rgba(var(--primary-glow-color-rgb, 196, 113, 237),0.4);
+        }
+
+        .interest-card .icon-container i { 
+            font-size: 2.5vw; /* Responsive icon size, adjust as needed */
+            color: var(--primary-glow-color);
+            transition: transform 0.3s;
+            position: absolute; /* Center icon within the container */
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+         /* Fallback for very small screens or if vw is too small */
+        @media (max-width: 600px) {
+             .interest-card .icon-container i { font-size: 1.8rem; }
+        }
+        @media (min-width: 1000px) { /* Cap icon size on large screens */
+            .interest-card .icon-container i { font-size: 2.2rem; }
+        }
+
+        .interest-card:hover .icon-container i {
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+
+        .interest-card h3 { 
+            margin: 0 0 5px;
+            font-size: 1rem; /* Adjust as needed */
+            color: var(--text-glow-color);
+            text-align: center;
+        }
+
+        .interest-card p { 
+            margin: 0;
+            color: rgba(var(--text-glow-color-rgb, 240, 217, 255), 0.8);
+            font-size: 0.8rem; /* Adjust as needed */
+            text-align: center;
+        }
+
+        .interest-card p i { 
+            font-size: 0.75rem;
+            margin-right: 3px;
+            color: var(--secondary-glow-color);
+        }
+
+        /* .bottom-nav styles are now in theme-styles.css */
+
+        /* Ensuring 3x3 grid layout, card sizes will adapt. */
+        /* Media queries for column changes are removed to maintain 3 columns. */
+        /* Adjustments for very small screens can be made to card content if necessary. */
+
+        /* Modal Styles */
+        .modal {
+            /* display: none; /* Hidden by default - will be controlled by JS */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.6); /* Black w/ opacity */
+            display: flex; /* Used to center modal content */
+            align-items: center; /* Vertically center */
+            justify-content: center; /* Horizontally center */
+        }
+
+        .modal-content {
+            background-color: var(--background-color, #1a1225); /* Use theme background or fallback */
+            color: var(--text-glow-color, #f0d9ff); /* Use theme text color or fallback */
+            margin: auto;
+            padding: 25px;
+            border: 1px solid var(--primary-glow-color, #c471ed);
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px; /* Max width */
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            position: relative;
+            animation: fadeInModal 0.3s ease-out;
+        }
+
+        @keyframes fadeInModal {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .close-button {
+            color: var(--secondary-glow-color, #6253FF);
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            transition: color 0.2s;
+        }
+
+        .close-button:hover,
+        .close-button:focus {
+            color: var(--primary-glow-color, #c471ed);
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .modal-content h2 {
+            margin-top: 0;
+            color: var(--primary-glow-color, #c471ed);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        #createInterestForm div {
+            margin-bottom: 15px;
+        }
+
+        #createInterestForm label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: var(--text-glow-color, #f0d9ff);
+        }
+
+        #createInterestForm input[type="text"],
+        #createInterestForm input[type="file"] {
+            width: calc(100% - 22px); /* Full width minus padding and border */
+            padding: 10px;
+            margin-bottom: 5px; /* Space below input */
+            border: 1px solid var(--secondary-glow-color, #6253FF);
+            border-radius: 5px;
+            background-color: rgba(var(--primary-glow-color-rgb, 196, 113, 237), 0.1);
+            color: var(--text-glow-color, #f0d9ff);
+            box-sizing: border-box; /* Include padding and border in the element's total width and height */
+        }
+        
+        #createInterestForm input[type="file"] {
+            cursor: pointer;
+        }
+
+        #createInterestForm input[type="text"]:focus,
+        #createInterestForm input[type="file"]:focus {
+            outline: none;
+            border-color: var(--primary-glow-color, #c471ed);
+            box-shadow: 0 0 5px rgba(var(--primary-glow-color-rgb, 196, 113, 237), 0.5);
+        }
+        
+        #createInterestForm button[type="submit"] {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            /* Styles will be inherited from .btn and .theme-active-btn */
+        }
+        
+        #iconPreview {
+            border: 1px dashed var(--secondary-glow-color, #6253FF);
+            border-radius: 5px;
+            padding: 5px;
+        }
+
+
+        @media (max-width: 480px) { /* On very small screens, reduce gap and padding slightly */
+            .interests-grid {
+                gap: 10px;
+            }
+            .interest-card { 
+                padding: 10px; 
+            }
+            .interest-card .icon-container {
+                width: 50%; /* Adjust icon container size */
+                padding-bottom: 50%;
+                margin-bottom: 8px;
+            }
+            .interest-card .icon-container i {
+                 font-size: 1.5rem; /* Adjust icon font size */
+            }
+            .interest-card h3 { 
+                font-size: 0.85rem; 
+            }
+            .interest-card p { 
+                font-size: 0.7rem; 
+            }
+        }
+
+        /* Styles for bottom navigation badge */
+        .nav-item { /* Ensure parent is relative for absolute positioning of badge */
+            position: relative;
+        }
+        .nav-item .badge {
+            position: absolute;
+            top: 2px; 
+            right: 5px; 
+            background-color: var(--primary-glow-color); 
+            color: #050210; 
+            border-radius: 50%;
+            min-width: 18px; 
+            height: 18px;
+            padding: 0 4px; 
+            font-size: 10px; 
+            font-weight: bold;
+            display: flex; 
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 3px var(--primary-glow-color);
+            line-height: 1;
+            box-sizing: border-box;
+            display: none; /* Initially hidden, JS will show it */
+        }
+
+        /* Ensure bottom-nav padding is applied, matching theme-styles.css */
+        .bottom-nav.theme-active-nav {
+            padding: 8px 0;
+        }
+    </style>
+</head>
+<body class="theme-active">
+    <div class="tech-beams-background"> <!-- Added for theme consistency -->
+        <div class="beam beam-1"></div>
+        <div class="beam beam-2"></div>
+        <div class="beam beam-3"></div>
+        <div class="beam beam-4"></div>
+    </div>
+    <div class="container">
+        <!-- 顶部导航 -->
+        <header>
+            <div class="logo theme-active-logo">
+                <i class="fas fa-heart"></i>
+                <span>心动匹配</span>
+            </div>
+            <div class="user-actions">
+                <button id="createInterestBtn" class="btn btn-outline theme-active-btn"><i class="fas fa-edit"></i> 新建</button>
+                <button class="btn btn-outline theme-active-btn"><i class="fas fa-search"></i></button>
+            </div>
+        </header>
+
+        <!-- 新建兴趣模态框 -->
+        <div id="createInterestModal" class="modal" style="display:none;">
+            <div class="modal-content">
+                <span class="close-button">&times;</span>
+                <h2>新建兴趣</h2>
+                <form id="createInterestForm">
+                    <div>
+                        <label for="interestName">兴趣名称 (最多4个字):</label>
+                        <input type="text" id="interestName" name="interestName" maxlength="4" required>
+                    </div>
+                    <div>
+                        <label for="interestIcon">兴趣头像:</label>
+                        <input type="file" id="interestIcon" name="interestIcon" accept="image/*" required>
+                        <img id="iconPreview" src="#" alt="头像预览" style="max-width: 100px; max-height: 100px; display: none; margin-top: 10px;"/>
+                    </div>
+                    <button type="submit" class="btn theme-active-btn">创建</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 主内容区 -->
+        <main class="interests-container">
+          
+            <div class="interests-grid">
+                <!-- 兴趣卡片将通过JS动态生成 -->
+            </div>
+        </main>
+
+        <!-- 底部导航 -->
+        <nav class="bottom-nav theme-active-nav">
+            <a href="index.html" class="nav-item">
+                <i class="fas fa-home"></i>
+                <span>首页</span>
+            </a>
+            <a href="swipe.html" class="nav-item">
+                <i class="fas fa-layer-group"></i>
+                <span>卡片</span>
+            </a>
+            <a href="interests.html" class="nav-item active">
+                <i class="fas fa-hashtag"></i>
+                <span>兴趣</span>
+            </a>
+            <a href="chat-list.html" class="nav-item">
+                <i class="fas fa-comments"></i>
+                <span>聊天</span>
+                <span class="badge" id="chat-nav-badge"></span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- Floating Action Button for Theme -->
+    <button class="fab-theme-button" id="fabThemeButton" aria-label="打开颜色选择器">
+        <i class="fas fa-palette"></i>
+    </button>
+
+    <!-- Color Drawer -->
+    <div class="color-drawer" id="colorDrawer">
+        <h4>选择主题颜色</h4>
+        <div class="color-options" id="colorOptionsContainer">
+            <!-- Color options will be populated by JavaScript -->
+        </div>
+    </div>
+
+    <script>
+        const interests = [
+            { name: "音乐", icon: "fa-music", online: 0 },
+            { name: "汉服", icon: "fa-shirt", online: 0 },
+            { name: "爬山", icon: "fa-mountain", online: 0 },
+            { name: "无人机", icon: "fa-drone", online: 0 },
+            { name: "旅游", icon: "fa-plane", online: 0 },
+            { name: "摄影", icon: "fa-camera", online: 0 },
+            { name: "美食", icon: "fa-utensils", online: 0 },
+            { name: "读书", icon: "fa-book", online: 0 },
+            { name: "游戏", icon: "fa-gamepad", online: 0 },
+            { name: "健身", icon: "fa-dumbbell", online: 0 },
+            { name: "电影", icon: "fa-film", online: 0 },
+            { name: "绘画", icon: "fa-paintbrush", online: 0 }
+        ];
+
+        // 获取实际在线人数
+        async function getOnlineCount() {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) return;
+
+                // 连接WebSocket获取在线人数
+                const ws = new WebSocket(`ws://14.103.133.136:8766?token=${token}`);
+                
+                ws.onopen = function() {
+                    // 请求各个兴趣房间的在线人数
+                    interests.forEach(interest => {
+                        ws.send(JSON.stringify({
+                            type: 'get_room_count',
+                            room: interest.name
+                        }));
+                    });
+                };
+
+                ws.onmessage = function(event) {
+                    const data = JSON.parse(event.data);
+                    if (data.type === 'room_count') {
+                        const interest = interests.find(i => i.name === data.room);
+                        if (interest) {
+                            interest.online = data.count || 0;
+                            updateInterestCard(interest);
+                        }
+                    }
+                };
+
+                // 5秒后关闭连接
+                setTimeout(() => {
+                    if (ws.readyState === WebSocket.OPEN) {
+                        ws.close();
+                    }
+                }, 5000);
+
+            } catch (error) {
+                console.error('获取在线人数失败:', error);
+            }
+        }
+
+        // 更新兴趣卡片的在线人数
+        function updateInterestCard(interest) {
+            const cards = document.querySelectorAll('.interest-card');
+            cards.forEach(card => {
+                const title = card.querySelector('h3').textContent;
+                if (title === interest.name) {
+                    const onlineElement = card.querySelector('p');
+                    onlineElement.innerHTML = `<i class="fas fa-user"></i> ${interest.online} 在线`;
+                }
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const token = localStorage.getItem('token'); // Define token here for badge logic
+            const grid = document.querySelector(".interests-grid");
+            
+            // Generate interest cards
+            interests.forEach(interest => {
+                const card = document.createElement("a");
+                card.className = "interest-card theme-active-card"; // Added theme-active-card
+                card.href = `chat-room.html?interest=${encodeURIComponent(interest.name)}`; // Placeholder link
+                card.innerHTML = `
+                    <div class="icon-container">
+                        <i class="fas ${interest.icon}"></i>
+                    </div>
+                    <h3>${interest.name}</h3>
+                    <p><i class="fas fa-user"></i> ${interest.online} 在线</p>
+                `;
+                grid.appendChild(card);
+            });
+
+            // 获取实际在线人数
+            getOnlineCount();
+
+            // 每30秒更新一次在线人数
+            setInterval(getOnlineCount, 30000);
+
+            // 新建兴趣模态框逻辑
+            const createInterestBtn = document.getElementById('createInterestBtn');
+            const createInterestModal = document.getElementById('createInterestModal');
+            const closeButton = createInterestModal.querySelector('.close-button');
+            const createInterestForm = document.getElementById('createInterestForm');
+            const interestNameInput = document.getElementById('interestName');
+            const interestIconInput = document.getElementById('interestIcon');
+            const iconPreview = document.getElementById('iconPreview');
+
+            if (createInterestBtn) {
+                createInterestBtn.addEventListener('click', () => {
+                    createInterestModal.style.display = 'flex'; // Use flex to center
+                });
+            }
+
+            if (closeButton) {
+                closeButton.addEventListener('click', () => {
+                    createInterestModal.style.display = 'none';
+                    iconPreview.style.display = 'none'; // Hide preview on close
+                    createInterestForm.reset(); // Reset form
+                });
+            }
+
+            // Close modal if user clicks outside of it
+            window.addEventListener('click', (event) => {
+                if (event.target === createInterestModal) {
+                    createInterestModal.style.display = 'none';
+                    iconPreview.style.display = 'none';
+                    createInterestForm.reset();
+                }
+            });
+
+            if (interestIconInput) {
+                interestIconInput.addEventListener('change', function() {
+                    const file = this.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            iconPreview.src = e.target.result;
+                            iconPreview.style.display = 'block';
+                        }
+                        reader.readAsDataURL(file);
+                    } else {
+                        iconPreview.style.display = 'none';
+                        iconPreview.src = '#';
+                    }
+                });
+            }
+
+            if (createInterestForm) {
+                createInterestForm.addEventListener('submit', async (event) => {
+                    event.preventDefault();
+                    const name = interestNameInput.value.trim();
+                    const iconFile = interestIconInput.files[0];
+
+                    if (name.length === 0 || name.length > 4) {
+                        alert('兴趣名称必须为1-4个字。');
+                        return;
+                    }
+                    if (!iconFile) {
+                        alert('请上传兴趣头像。');
+                        return;
+                    }
+
+                    const formData = new FormData();
+                    formData.append('name', name);
+                    formData.append('icon', iconFile);
+                    
+                    // TODO: 替换为实际的后端API端点
+                    const apiUrl = 'http://14.103.133.136:5000/api/interests'; 
+
+                    try {
+                        const response = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}` // Assuming token is still in scope
+                            },
+                            body: formData
+                        });
+
+                        if (response.ok) {
+                            const newInterest = await response.json();
+                            alert('兴趣创建成功！');
+                            createInterestModal.style.display = 'none';
+                            iconPreview.style.display = 'none';
+                            createInterestForm.reset();
+                            
+                            // 动态添加新的兴趣卡片到UI
+                            // (或者可以简单地重新加载兴趣列表/页面)
+                            const newCard = document.createElement("a");
+                            newCard.className = "interest-card theme-active-card";
+                            // newInterest.icon should be the path to the uploaded icon or a FontAwesome class
+                            // For now, using a placeholder if newInterest.icon is a path
+                            let iconHtml = `<i class="fas fa-question-circle"></i>`; // Default icon
+                            if (newInterest.icon_url) { // Assuming backend returns icon_url
+                                iconHtml = `<img src="${newInterest.icon_url}" alt="${newInterest.name}" style="width: 60%; height: auto; border-radius: 50%;">`;
+                            } else if (newInterest.icon_class) { // Or a FontAwesome class
+                                iconHtml = `<i class="fas ${newInterest.icon_class}"></i>`;
+                            }
+
+                            newCard.href = `chat-room.html?interest=${encodeURIComponent(newInterest.name)}`;
+                            newCard.innerHTML = `
+                                <div class="icon-container">
+                                    ${iconHtml}
+                                </div>
+                                <h3>${newInterest.name}</h3>
+                                <p><i class="fas fa-user"></i> 0 在线</p> 
+                            `;
+                            grid.appendChild(newCard);
+                            // Optionally, add to the 'interests' array and re-fetch online counts
+                            // interests.push({ name: newInterest.name, icon: newInterest.icon_class || 'fa-question-circle', online: 0 });
+                            // getOnlineCount(); // Refresh counts
+
+                        } else {
+                            const errorData = await response.json();
+                            alert(`创建失败: ${errorData.message || response.statusText}`);
+                        }
+                    } catch (error) {
+                        console.error('创建兴趣时出错:', error);
+                        alert('创建兴趣时发生网络错误。');
+                    }
+                });
+            }
+
+            // Theme Switcher Logic (Copied)
+            const fabThemeButton = document.getElementById('fabThemeButton');
+            const colorDrawer = document.getElementById('colorDrawer');
+            const colorOptionsContainer = document.getElementById('colorOptionsContainer');
+            const root = document.documentElement;
+
+            function hexToRgb(hex) {
+                const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null;
+            }
+
+            function setRgbCssVars() {
+                const rootStyles = getComputedStyle(document.documentElement);
+                const primaryGlowHex = rootStyles.getPropertyValue('--primary-glow-color').trim();
+                const secondaryGlowHex = rootStyles.getPropertyValue('--secondary-glow-color').trim();
+                const textGlowHex = rootStyles.getPropertyValue('--text-glow-color').trim();
+
+                const primaryGlowRgb = hexToRgb(primaryGlowHex);
+                const secondaryGlowRgb = hexToRgb(secondaryGlowHex);
+                const textGlowRgb = hexToRgb(textGlowHex);
+
+                if (primaryGlowRgb) document.documentElement.style.setProperty('--primary-glow-color-rgb', `${primaryGlowRgb.r},${primaryGlowRgb.g},${primaryGlowRgb.b}`);
+                if (secondaryGlowRgb) document.documentElement.style.setProperty('--secondary-glow-color-rgb', `${secondaryGlowRgb.r},${secondaryGlowRgb.g},${secondaryGlowRgb.b}`);
+                if (textGlowRgb) document.documentElement.style.setProperty('--text-glow-color-rgb', `${textGlowRgb.r},${textGlowRgb.g},${textGlowRgb.b}`);
+            }
+            setRgbCssVars();
+
+            const themes = [
+                { name: 'Default Purple', primary: '#c471ed', secondary: '#6253FF', text: '#f0d9ff', tip: '#ffffff' },
+                { name: 'Cyber Blue', primary: '#00e0ff', secondary: '#0077ff', text: '#e0f7ff', tip: '#ffffff' },
+                { name: 'Synth Pink', primary: '#ff00aa', secondary: '#c500ff', text: '#ffe0f5', tip: '#ffffff' },
+                { name: 'Emerald Green', primary: '#00ffaa', secondary: '#00aa7f', text: '#e0fff5', tip: '#ffffff' },
+                { name: 'Solar Orange', primary: '#ffaa00', secondary: '#ff7700', text: '#fff5e0', tip: '#ffffff' },
+                { name: 'Ruby Red', primary: '#ff0055', secondary: '#aa003c', text: '#ffe0e8', tip: '#ffffff' }
+            ];
+            let currentTheme = themes[0];
+
+            function applyTheme(theme) {
+                root.style.setProperty('--primary-glow-color', theme.primary);
+                root.style.setProperty('--secondary-glow-color', theme.secondary);
+                root.style.setProperty('--text-glow-color', theme.text);
+                root.style.setProperty('--fiber-tip-highlight', theme.tip);
+                setRgbCssVars();
+                currentTheme = theme;
+                localStorage.setItem('selectedTheme', JSON.stringify(theme));
+                updateActiveColorOption();
+            }
+
+            function loadTheme() {
+                const savedTheme = localStorage.getItem('selectedTheme');
+                if (savedTheme) {
+                    applyTheme(JSON.parse(savedTheme));
+                } else {
+                    applyTheme(themes[0]);
+                }
+            }
+
+            function updateActiveColorOption() {
+                const options = colorOptionsContainer.querySelectorAll('.color-option');
+                options.forEach(opt => {
+                    opt.classList.toggle('active', opt.dataset.primary === currentTheme.primary);
+                });
+            }
+
+            themes.forEach(theme => {
+                const option = document.createElement('div');
+                option.className = 'color-option';
+                option.dataset.primary = theme.primary;
+                const span = document.createElement('span');
+                span.style.background = `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`;
+                option.appendChild(span);
+                option.setAttribute('title', theme.name);
+                option.addEventListener('click', () => applyTheme(theme));
+                colorOptionsContainer.appendChild(option);
+            });
+
+            fabThemeButton.addEventListener('click', () => colorDrawer.classList.toggle('open'));
+            document.addEventListener('click', (event) => {
+                if (!colorDrawer.contains(event.target) && !fabThemeButton.contains(event.target) && colorDrawer.classList.contains('open')) {
+                    colorDrawer.classList.remove('open');
+                }
+            });
+            loadTheme();
+
+            // --- Logic to fetch and display total unread count on chat nav badge ---
+            function updateTotalUnreadBadgeOnNav(count) {
+                const chatNavBadge = document.getElementById('chat-nav-badge');
+                if (chatNavBadge) {
+                    if (count > 0) {
+                        chatNavBadge.textContent = count > 99 ? '99+' : count;
+                        chatNavBadge.style.display = 'flex'; // Ensure it's visible
+                    } else {
+                        chatNavBadge.textContent = '';
+                        chatNavBadge.style.display = 'none';
+                    }
+                }
+            }
+
+            function fetchTotalUnreadCountForNav() {
+                // 'token' is already defined in this 'DOMContentLoaded' scope
+                if (!token) {
+                    console.log('No token found, cannot fetch unread count for nav badge.');
+                    updateTotalUnreadBadgeOnNav(0);
+                    return;
+                }
+                console.log('Attempting to fetch total unread count for nav badge (interests.html)...');
+                fetch('http://14.103.133.136:5000/api/unread-count', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                })
+                .then(response => {
+                    console.log('Nav badge (interests.html): Received response from /api/unread-count (status):', response.status);
+                    if (!response.ok) {
+                        return response.text().then(text => {
+                            console.error('Nav badge (interests.html): Error response body from /api/unread-count:', text);
+                            throw new Error(`HTTP error! status: ${response.status}, body: ${text}`);
+                        }).catch(err => {
+                            console.error('Nav badge (interests.html): Failed to read error response body or not text:', err);
+                            throw new Error(`HTTP error! status: ${response.status}, (could not read error body)`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data instanceof Error) { return; } 
+                    if (data && typeof data.unread_count !== 'undefined') {
+                        updateTotalUnreadBadgeOnNav(data.unread_count);
+                        console.log('Nav badge (interests.html): Total unread count fetched:', data.unread_count);
+                    } else {
+                        console.error('Nav badge (interests.html): Failed to get unread_count from API response:', data);
+                        updateTotalUnreadBadgeOnNav(0);
+                    }
+                })
+                .catch(error => {
+                    console.error('Nav badge (interests.html): Error fetching total unread count:', error.message);
+                    updateTotalUnreadBadgeOnNav(0);
+                });
+            }
+
+            if (token) { 
+                fetchTotalUnreadCountForNav();
+            } else {
+                updateTotalUnreadBadgeOnNav(0);
+            }
+            // --- End of unread count logic ---
+        });
+    </script>
+</body>
+</html>

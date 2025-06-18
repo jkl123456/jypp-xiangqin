@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>心动匹配 - 完善资料指引</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css"> <!-- General styles -->
+    <link rel="stylesheet" href="css/theme-styles.css"> <!-- Theme specific styles -->
+    <style>
+        /* Styles specific to guide.html, adapted from login.html */
+        .container { 
+             max-width: 800px; /* Wider for guide form */
+             margin: 0 auto; 
+             padding: 1rem; 
+             display: flex;
+             flex-direction: column;
+             min-height: calc(100vh - 120px); 
+             box-sizing: border-box;
+        }
+        header { 
+            display: flex;
+            justify-content: space-between; 
+            align-items: center;
+            padding: 10px 0; 
+            margin-bottom: 1rem; 
+            width: 100%; 
+        }
+        /* .logo will be themed by theme-styles.css */
+
+        .guide-container { /* Themed form container, similar to login-container */
+            max-width: 750px; /* Adjusted for guide content */
+            margin: 1rem auto; /* Adjusted margin */
+            padding: 2.5rem; 
+            background: rgba(var(--primary-glow-color-rgb, 196, 113, 237), 0.04); 
+            border: 1px solid rgba(var(--primary-glow-color-rgb, 196, 113, 237),0.2); 
+            border-radius: 15px; 
+            box-shadow: 0 8px 30px rgba(var(--primary-glow-color-rgb, 196, 113, 237), 0.1), 0 4px 10px rgba(0,0,0,0.15); 
+            width: 100%; 
+            box-sizing: border-box;
+            text-align: center; /* Center content */
+        }
+        
+        .progress-bar { 
+            height: 10px; /* Slightly thicker */
+            background: rgba(var(--secondary-glow-color-rgb, 98, 83, 255), 0.2); /* More visible background */
+            border-radius: 5px;
+            margin-bottom: 2.5rem; /* Increased margin */
+            overflow: hidden;
+        }
+        
+        .progress { 
+            height: 100%;
+            width: 10%; /* Static small progress as it's a guide page now */
+            background: var(--primary-glow-color);
+            border-radius: 5px;
+            transition: width 0.5s ease-in-out;
+            box-shadow: 0 0 10px var(--primary-glow-color); /* Enhanced shadow */
+        }
+        
+        .guide-header {
+            text-align: center;
+            margin-bottom: 2.5rem; 
+        }
+        
+        .guide-header h1 { 
+            color: var(--primary-glow-color);
+            font-size: 2.2rem; 
+            text-shadow: 0 0 10px rgba(var(--primary-glow-color-rgb, 196, 113, 237), 0.5);
+            margin-bottom: 0.75rem;
+        }
+        .guide-header p {
+            color: var(--text-glow-color);
+            opacity: 0.85; 
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+        
+        .btn-submit { /* Uses .theme-active-btn */
+            width: 100%;
+            max-width: 320px; /* Slightly wider */
+            margin: 1.5rem auto 0; /* Adjusted top margin */
+            padding: 14px; 
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 8px;
+            display: block; /* Ensure it takes full width up to max-width */
+        }
+        .btn-submit:active {
+            transform: scale(0.98);
+        }
+        
+        .skip-link {
+            text-align: center;
+            margin-top: 1.5rem; /* Increased margin */
+            font-size: 0.9rem;
+        }
+        .skip-link a { 
+            color: var(--secondary-glow-color);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        .skip-link a:hover {
+            color: var(--primary-glow-color);
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body class="theme-active">
+    <div class="tech-beams-background"> 
+        <div class="beam beam-1"></div>
+        <div class="beam beam-2"></div>
+        <div class="beam beam-3"></div>
+        <div class="beam beam-4"></div>
+    </div>
+    <div class="container">
+        <header>
+            <div class="logo theme-active-logo">
+                <i class="fas fa-heart"></i>
+                <span>心动匹配</span>
+            </div>
+        </header>
+
+        <div class="guide-container theme-active-card"> 
+            <div class="progress-bar">
+                <div class="progress"></div>
+            </div>
+            
+            <div class="guide-header">
+                <h1>完善个人中心资料</h1>
+                <p>为了更好地为您匹配，请前往个人中心完善以下重要信息：<br>
+                    <strong>昵称、年龄、性别、职业、省份、城市、兴趣爱好、个人简介</strong>以及<strong>照片墙</strong>。
+                    <br>完整的资料有助于我们为您推荐更合适的对象，并提高您的匹配成功率！
+                </p>
+            </div>
+            
+            <button type="button" class="btn btn-primary btn-submit theme-active-btn" onclick="goToProfile()">前往个人中心</button>
+            <div class="skip-link">
+                <a href="profile.html">立即前往个人中心完善</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Action Button for Theme -->
+    <button class="fab-theme-button" id="fabThemeButton" aria-label="打开颜色选择器">
+        <i class="fas fa-palette"></i>
+    </button>
+
+    <!-- Color Drawer -->
+    <div class="color-drawer" id="colorDrawer">
+        <h4>选择主题颜色</h4>
+        <div class="color-options" id="colorOptionsContainer">
+            <!-- Color options will be populated by JavaScript -->
+        </div>
+    </div>
+
+    <script src="js/location-data.js"></script>
+    <script>
+        // Function to navigate to profile page
+        function goToProfile() {
+            window.location.href = 'profile.html';
+        }
+
+        // Theme Switcher Logic (kept as it's a general UI feature)
+        document.addEventListener('DOMContentLoaded', () => {
+            const fabThemeButton = document.getElementById('fabThemeButton');
+            const colorDrawer = document.getElementById('colorDrawer');
+            const colorOptionsContainer = document.getElementById('colorOptionsContainer');
+            const root = document.documentElement;
+
+            if (fabThemeButton && colorDrawer && colorOptionsContainer) {
+                function hexToRgb(hex) {
+                    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                    return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null;
+                }
+
+                function setRgbCssVars() {
+                    const rootStyles = getComputedStyle(document.documentElement);
+                    const primaryGlowHex = rootStyles.getPropertyValue('--primary-glow-color').trim();
+                    const secondaryGlowHex = rootStyles.getPropertyValue('--secondary-glow-color').trim();
+                    const textGlowHex = rootStyles.getPropertyValue('--text-glow-color').trim();
+
+                    const primaryGlowRgb = hexToRgb(primaryGlowHex);
+                    const secondaryGlowRgb = hexToRgb(secondaryGlowHex);
+                    const textGlowRgb = hexToRgb(textGlowHex);
+
+                    if (primaryGlowRgb) document.documentElement.style.setProperty('--primary-glow-color-rgb', `${primaryGlowRgb.r},${primaryGlowRgb.g},${primaryGlowRgb.b}`);
+                    if (secondaryGlowRgb) document.documentElement.style.setProperty('--secondary-glow-color-rgb', `${secondaryGlowRgb.r},${secondaryGlowRgb.g},${secondaryGlowRgb.b}`);
+                    if (textGlowRgb) document.documentElement.style.setProperty('--text-glow-color-rgb', `${textGlowRgb.r},${textGlowRgb.g},${textGlowRgb.b}`);
+                }
+                setRgbCssVars();
+
+                const themes = [
+                    { name: 'Default Purple', primary: '#c471ed', secondary: '#6253FF', text: '#f0d9ff', tip: '#ffffff' },
+                    { name: 'Cyber Blue', primary: '#00e0ff', secondary: '#0077ff', text: '#e0f7ff', tip: '#ffffff' },
+                    { name: 'Synth Pink', primary: '#ff00aa', secondary: '#c500ff', text: '#ffe0f5', tip: '#ffffff' },
+                    { name: 'Emerald Green', primary: '#00ffaa', secondary: '#00aa7f', text: '#e0fff5', tip: '#ffffff' },
+                    { name: 'Solar Orange', primary: '#ffaa00', secondary: '#ff7700', text: '#fff5e0', tip: '#ffffff' },
+                    { name: 'Ruby Red', primary: '#ff0055', secondary: '#aa003c', text: '#ffe0e8', tip: '#ffffff' }
+                ];
+                let currentTheme = themes[0];
+
+                function applyTheme(theme) {
+                    root.style.setProperty('--primary-glow-color', theme.primary);
+                    root.style.setProperty('--secondary-glow-color', theme.secondary);
+                    root.style.setProperty('--text-glow-color', theme.text);
+                    root.style.setProperty('--fiber-tip-highlight', theme.tip);
+                    setRgbCssVars();
+                    currentTheme = theme;
+                    localStorage.setItem('selectedTheme', JSON.stringify(theme));
+                    updateActiveColorOption();
+                }
+
+                function loadTheme() {
+                    const savedTheme = localStorage.getItem('selectedTheme');
+                    if (savedTheme) {
+                        applyTheme(JSON.parse(savedTheme));
+                    } else {
+                        applyTheme(themes[0]);
+                    }
+                }
+
+                function updateActiveColorOption() {
+                    const options = colorOptionsContainer.querySelectorAll('.color-option');
+                    options.forEach(opt => {
+                        opt.classList.toggle('active', opt.dataset.primary === currentTheme.primary);
+                    });
+                }
+
+                themes.forEach(theme => {
+                    const option = document.createElement('div');
+                    option.className = 'color-option';
+                    option.dataset.primary = theme.primary;
+                    const span = document.createElement('span');
+                    span.style.background = `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`;
+                    option.appendChild(span);
+                    option.setAttribute('title', theme.name);
+                    option.addEventListener('click', () => applyTheme(theme));
+                    colorOptionsContainer.appendChild(option);
+                });
+
+                fabThemeButton.addEventListener('click', () => colorDrawer.classList.toggle('open'));
+                document.addEventListener('click', (event) => {
+                    if (!colorDrawer.contains(event.target) && !fabThemeButton.contains(event.target) && colorDrawer.classList.contains('open')) {
+                        colorDrawer.classList.remove('open');
+                    }
+                });
+                loadTheme();
+            }
+        });
+    </script>
+</body>
+</html>

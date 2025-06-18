@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理员仪表盘</title>
+    <link rel="stylesheet" href="admin_styles.css">
+</head>
+<body>
+    <div class="container dashboard-container">
+        <div class="dashboard-header">
+            <h1>用户管理</h1>
+            <button id="logoutButton" class="button">登出</button>
+        </div>
+        
+        <table id="usersTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>邮箱</th>
+                    <th>昵称</th>
+                    <th>年龄</th>
+                    <th>性别</th>
+                    <th>注册时间</th>
+                    <th>最后上线</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- 用户数据将通过JS动态插入 -->
+            </tbody>
+        </table>
+
+        <div class="pagination-controls" style="text-align: center; margin-top: 20px;">
+            <button id="prevPageButton" class="button" disabled>&laquo; 上一页</button>
+            <span id="pageInfo" style="margin: 0 15px;">第 1 / 1 页</span>
+            <button id="nextPageButton" class="button" disabled>下一页 &raquo;</button>
+        </div>
+    </div>
+
+    <!-- 编辑用户模态框 (初始隐藏) -->
+    <div id="editUserModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" id="closeEditModal">&times;</span>
+            <h2>编辑用户资料</h2>
+            <form id="editUserForm">
+                <input type="hidden" id="editUserId">
+                <div class="form-group">
+                    <label for="editNickname">昵称:</label>
+                    <input type="text" id="editNickname" name="nickname">
+                </div>
+                <div class="form-group">
+                    <label for="editEmail">邮箱:</label>
+                    <input type="email" id="editEmail" name="email">
+                </div>
+                <div class="form-group">
+                    <label for="editAge">年龄:</label>
+                    <input type="number" id="editAge" name="age">
+                </div>
+                <div class="form-group">
+                    <label for="editGender">性别:</label>
+                    <select id="editGender" name="gender">
+                        <option value="">未设置</option>
+                        <option value="male">男</option>
+                        <option value="female">女</option>
+                        <option value="other">其他</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editProfession">职业:</label>
+                    <input type="text" id="editProfession" name="profession">
+                </div>
+                <div class="form-group">
+                    <label for="editProvince">省份:</label>
+                    <input type="text" id="editProvince" name="province">
+                </div>
+                <div class="form-group">
+                    <label for="editCity">城市:</label>
+                    <input type="text" id="editCity" name="city">
+                </div>
+                <div class="form-group">
+                    <label for="editInterests">兴趣 (逗号分隔):</label>
+                    <input type="text" id="editInterests" name="interests">
+                </div>
+                <div class="form-group">
+                    <label for="editBio">简介:</label>
+                    <textarea id="editBio" name="bio" rows="3"></textarea>
+                </div>
+                 <div class="form-group">
+                    <label for="editAvatar">头像URL:</label>
+                    <input type="text" id="editAvatar" name="avatar">
+                </div>
+                <div class="form-group">
+                    <label for="editPassword">新密码 (留空则不修改):</label>
+                    <input type="password" id="editPassword" name="password">
+                </div>
+                <button type="submit">保存更改</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="dashboard.js"></script>
+</body>
+</html>

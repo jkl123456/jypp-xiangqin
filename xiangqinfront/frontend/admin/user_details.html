@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户详细信息</title>
+    <link rel="stylesheet" href="admin_styles.css">
+</head>
+<body>
+    <div class="container dashboard-container">
+        <div class="dashboard-header">
+            <h1 id="userDetailsTitle">用户详情</h1>
+            <div>
+                <a href="dashboard.html" class="button" style="margin-right: 10px;">返回列表</a>
+                <button id="logoutButton" class="button">登出</button>
+            </div>
+        </div>
+
+        <div id="userDetailsContent">
+            <!-- 用户基本信息 -->
+            <div class="details-section" id="basicInfoSection">
+                <h3>基本信息</h3>
+                <p><strong>ID:</strong> <span id="detailUserId"></span></p>
+                <p><strong>邮箱:</strong> <span id="detailEmail"></span></p>
+                <p><strong>昵称:</strong> <span id="detailNickname"></span></p>
+                <p><strong>年龄:</strong> <span id="detailAge"></span></p>
+                <p><strong>性别:</strong> <span id="detailGender"></span></p>
+                <p><strong>职业:</strong> <span id="detailProfession"></span></p>
+                <p><strong>省份:</strong> <span id="detailProvince"></span></p>
+                <p><strong>城市:</strong> <span id="detailCity"></span></p>
+                <p><strong>兴趣:</strong> <span id="detailInterests"></span></p>
+                <p><strong>简介:</strong> <span id="detailBio"></span></p>
+                <p><strong>头像:</strong> <img src="" alt="头像" id="detailAvatar" style="max-width:100px; max-height:100px; border-radius:50%;"></p>
+                <p><strong>注册时间:</strong> <span id="detailCreatedAt"></span></p>
+                <p><strong>最后上线:</strong> <span id="detailLastOnline"></span></p>
+            </div>
+
+            <!-- 用户卡片 -->
+            <div class="details-section" id="userCardsSection">
+                <h3>用户卡片</h3>
+                <div id="cardsContainer"></div>
+            </div>
+
+            <!-- 匹配历史 -->
+            <div class="details-section" id="matchesSection">
+                <h3>匹配历史</h3>
+                <table id="matchesTable">
+                    <thead>
+                        <tr>
+                            <th>匹配ID</th>
+                            <th>用户1 (ID)</th>
+                            <th>用户1 (昵称)</th>
+                            <th>用户2 (ID)</th>
+                            <th>用户2 (昵称)</th>
+                            <th>状态</th>
+                            <th>时间</th>
+                        </tr>
+                    </thead>
+                    <tbody id="matchesTableBody"></tbody>
+                </table>
+            </div>
+
+            <!-- 聊天伙伴 -->
+            <div class="details-section" id="chatPartnersSection">
+                <h3>聊天伙伴</h3>
+                <table id="chatPartnersTable">
+                    <thead>
+                        <tr>
+                            <th>伙伴ID</th>
+                            <th>伙伴昵称</th>
+                            <th>头像</th>
+                            <th>最后消息</th>
+                            <th>时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="chatPartnersTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <script src="user_details.js"></script>
+</body>
+</html>

@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>心动匹配 - 遇见你的缘分</title>
+    <script src="js/config.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css"> <!-- General styles -->
+    <link rel="stylesheet" href="css/theme-styles.css"> <!-- Theme specific styles -->
+    <style>
+        /* Styles specific to index.html that are not part of the global theme */
+        /* Note: Some styles like .container, header, .soul-sphere-section, etc., might be kept here if they are truly unique to index.html */
+        /* Or they could be moved to theme-styles.css if they are part of the theme */
+
+        .container { /* Assuming this container style is specific enough for index.html */
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 15px 60px; 
+        }
+
+        header { /* This header style is specific to index.html's layout */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0; 
+            border-bottom: 1px solid rgba(255,255,255,0.07); /* Themed border color might be good */
+            margin-bottom: 10px; 
+        }
+        /* .logo, .user-actions .btn styles are now in theme-styles.css or will be adapted using theme-active classes */
+
+        .soul-sphere-section {
+            height: 55vh; 
+            min-height: 420px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            perspective: 800px; 
+            perspective-origin: center center;
+            margin-bottom: 15px; 
+            overflow: hidden;
+            cursor: grab; 
+        }
+        .soul-sphere-section.dragging {
+            cursor: grabbing;
+        }
+
+        .soul-sphere-container { 
+            position: relative; 
+            width: 1px; height: 1px; 
+            transform-style: preserve-3d;
+        }
+
+        .nickname-fiber-wrapper { 
+            position: absolute;
+            top: 0; left: 0; width: 1px; height: 1px; 
+            transform-style: preserve-3d;
+            will-change: transform, opacity;
+        }
+
+        .nickname-fiber-line {
+            position: absolute;
+            bottom: 0; 
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2px; 
+            height: var(--fiber-length); 
+            background: linear-gradient(to top,
+                rgba(var(--secondary-glow-color-rgb, 98, 83, 255), 0.2) 0%, 
+                rgba(var(--secondary-glow-color-rgb, 98, 83, 255), 0.55) 40%,
+                rgba(var(--primary-glow-color-rgb, 196, 113, 237), 0.9) 75%, 
+                var(--primary-glow-color) 98% 
+            );
+            border-radius: 2px 2px 0 0;
+            transform-origin: bottom center;
+            filter: blur(0.7px); 
+        }
+
+        .nickname-fiber-line::after { 
+            display: block; 
+            content: '';
+            position: absolute;
+            top: -2px; /* Adjust this based on fiber line width for perfect placement */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;   
+            height: 4px;
+            background-color: var(--fiber-tip-highlight, #fff);
+            border-radius: 50%;
+            box-shadow: 0 0 5px 2px var(--fiber-tip-highlight, #fff), 
+                        0 0 10px 3px rgba(var(--primary-glow-color-rgb, 196, 113, 237), 0.7),
+                        0 0 15px 4px rgba(var(--primary-glow-color-rgb, 196, 113, 237), 0.5);
+            opacity: 0.9; 
+        }
+
+        .nickname-2d-overlay {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            transform-style: preserve-3d;
+        }
+
+        .nickname-text-billboard { 
+            position: absolute; 
+            color: var(--text-glow-color); /* Uses theme variable */
+            font-size: 0.65rem; 
+            font-weight: 400; 
+            white-space: nowrap;
+            text-shadow: 0 0 4px rgba(var(--text-glow-color-rgb, 240, 217, 255), 0.7),
+                         0 0 8px rgba(var(--primary-glow-color-rgb, 196, 113, 237), 0.5); /* Uses theme variables */
+            pointer-events: auto; 
+            cursor: default;
+            will-change: transform, opacity, left, top;
+            opacity: 0; 
+        }
+        
+        /* tech-grid and grid-container are specific to index.html layout */
+        .tech-grid { display: flex; align-items: center; justify-content: center; padding: 20px 0; }
+        .grid-container {
+            display: grid; grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, auto); gap: 20px;
+            width: 100%; max-width: 550px; padding: 10px;
+        }
+        /* .feature-card, .tech-sphere, .bottom-nav styles are now in theme-styles.css and will use .theme-active-* classes */
+
+        /* Styles for bottom navigation badge */
+        .nav-item { /* Ensure parent is relative for absolute positioning of badge */
+            position: relative;
+        }
+        .nav-item .badge {
+            position: absolute;
+            top: 2px; 
+            right: 5px; 
+            background-color: var(--primary-glow-color); 
+            color: #050210; 
+            border-radius: 50%;
+            min-width: 18px; 
+            height: 18px;
+            padding: 0 4px; 
+            font-size: 10px; 
+            font-weight: bold;
+            display: flex; 
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 3px var(--primary-glow-color);
+            line-height: 1;
+            box-sizing: border-box;
+            display: none; /* Initially hidden, JS will show it */
+        }
+    </style>
+</head>
+<body class="theme-active">
+    <div class="tech-beams-background">
+        <div class="beam beam-1"></div>
+        <div class="beam beam-2"></div>
+        <div class="beam beam-3"></div>
+        <div class="beam beam-4"></div>
+    </div>
+
+    <div class="container">
+        <header>
+            <div class="logo theme-active-logo"><i class="fas fa-atom"></i><span>心动匹配</span></div>
+            <div class="user-actions">
+                <button class="btn btn-outline theme-active-btn"><i class="fas fa-search"></i> 搜索</button>
+                <a href="register.html" id="registerBtn" class="btn btn-outline theme-active-btn">注册</a>
+                <a href="login.html" id="loginBtn" class="btn btn-primary theme-active-btn">登录</a>
+                <a href="profile.html" id="profileBtn" class="btn btn-primary theme-active-btn" style="display: none;"><i class="fas fa-user-circle"></i> 个人中心</a>
+            </div>
+        </header>
+
+        <section class="soul-sphere-section" id="dynamicNicknameSection">
+            <div class="soul-sphere-container" id="soulSphereContainer">
+            </div>
+            <div class="nickname-2d-overlay" id="nicknameOverlay">
+            </div>
+        </section>
+
+        <section class="tech-grid">
+            <div class="grid-container">
+                <div class="feature-card theme-active-card" onclick="handleMatchChatClick()">
+                    <div class="tech-sphere theme-active-sphere"><i class="fas fa-comments"></i></div>
+                    <h3 class="feature-title">匹配聊天</h3><p>与智能匹配的伙伴聊天</p>
+                </div>
+                <div class="feature-card theme-active-card" onclick="location.href='interests.html'">
+                    <div class="tech-sphere theme-active-sphere"><i class="fas fa-hashtag"></i></div>
+                    <h3 class="feature-title">兴趣聊天室</h3><p>加入你感兴趣的话题</p>
+                </div>
+                <div class="feature-card theme-active-card" onclick="location.href='swipe.html'">
+                    <div class="tech-sphere theme-active-sphere"><i class="fas fa-layer-group"></i></div>
+                    <h3 class="feature-title">卡片匹配</h3><p>滑动发现心动对象</p>
+                </div>
+                <div class="feature-card theme-active-card" onclick="location.href='guide.html'">
+                    <div class="tech-sphere theme-active-sphere"><i class="fas fa-book-open"></i></div>
+                    <h3 class="feature-title">新手指南</h3><p>了解平台使用方法</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <nav class="bottom-nav theme-active-nav">
+        <a href="index.html" class="nav-item active"><i class="fas fa-home"></i><span>首页</span></a>
+        <a href="swipe.html" class="nav-item"><i class="fas fa-layer-group"></i><span>卡片</span></a>
+        <a href="interests.html" class="nav-item"><i class="fas fa-hashtag"></i><span>兴趣</span></a>
+        <a href="chat-list.html" class="nav-item">
+            <i class="fas fa-comments"></i>
+            <span>聊天</span>
+            <span class="badge" id="chat-nav-badge"></span>
+        </a>
+    </nav>
+
+    <!-- Floating Action Button for Theme -->
+    <button class="fab-theme-button" id="fabThemeButton" aria-label="打开颜色选择器">
+        <i class="fas fa-palette"></i>
+    </button>
+
+    <!-- Color Drawer -->
+    <div class="color-drawer" id="colorDrawer">
+        <h4>选择主题颜色</h4>
+        <div class="color-options" id="colorOptionsContainer">
+            <!-- Color options will be populated by JavaScript -->
+        </div>
+    </div>
+
+    <script>
+        // ALL JAVASCRIPT REMAINS THE SAME AS THE PREVIOUS SPHERE VERSION
+        // The only change needed was in the CSS for .nickname-fiber-line::after
+        // and ensuring --fiber-tip-highlight is defined.
+
+        const soulSphereSection = document.getElementById('dynamicNicknameSection');
+        const soulSphereContainer = document.getElementById('soulSphereContainer'); 
+        const nicknameOverlay = document.getElementById('nicknameOverlay');
+
+        // 用户提供的静态昵称列表，作为后备
+        const fallbackNicknames = [ 
+            "星河旅人", "月下独酌", "清风徐来", "迷雾森林", "光影追逐者", "代码诗人", "晨曦微光",
+            "午后小憩", "彩虹糖", "冰镇西瓜", "书中颜如玉", "不吃香菜", "深海的鱼", "云端漫步",
+            "匿名艺术家", "时间旅者", "梦的解析师", "快乐小狗", "早起鸟儿", "熬夜冠军", "奶茶续命"
+        ];
+
+        // 从后端获取昵称的函数
+        async function fetchNicknamesFromBackend() {
+            try {
+                // 更新API服务器地址为用户指定的IP
+                const response = await fetch(`${CONFIG.API_BASE_URL}/api/nicknames_for_sphere`);
+                if (!response.ok) {
+                    console.error(`获取昵称失败: ${response.status} ${response.statusText}`);
+                    return []; // 返回空数组表示获取失败
+                }
+                const data = await response.json();
+                if (data && data.nicknames && Array.isArray(data.nicknames)) {
+                    console.log("从后端获取的昵称:", data.nicknames);
+                    return data.nicknames;
+                } else {
+                    console.error("后端返回的昵称数据格式不正确:", data);
+                    return [];
+                }
+            } catch (error) {
+                console.error("调用后端昵称API时出错:", error);
+                return []; // 网络错误或其他错误，返回空数组
+            }
+        }
+
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null;
+        }
+        
+        function setRgbCssVars() {
+            const rootStyles = getComputedStyle(document.documentElement);
+            const primaryGlowHex = rootStyles.getPropertyValue('--primary-glow-color').trim();
+            const secondaryGlowHex = rootStyles.getPropertyValue('--secondary-glow-color').trim();
+            const textGlowHex = rootStyles.getPropertyValue('--text-glow-color').trim();
+
+            const primaryGlowRgb = hexToRgb(primaryGlowHex);
+            const secondaryGlowRgb = hexToRgb(secondaryGlowHex);
+            const textGlowRgb = hexToRgb(textGlowHex);
+
+            if (primaryGlowRgb) document.documentElement.style.setProperty('--primary-glow-color-rgb', `${primaryGlowRgb.r},${primaryGlowRgb.g},${primaryGlowRgb.b}`);
+            if (secondaryGlowRgb) document.documentElement.style.setProperty('--secondary-glow-color-rgb', `${secondaryGlowRgb.r},${secondaryGlowRgb.g},${secondaryGlowRgb.b}`);
+            if (textGlowRgb) document.documentElement.style.setProperty('--text-glow-color-rgb', `${textGlowRgb.r},${textGlowRgb.g},${textGlowRgb.b}`);
+        }
+        setRgbCssVars();
+
+        function generateRandomNicknames(count, sourceArray) {
+            const availableNicknames = [...sourceArray];
+            const selectedNicknames = [];
+            const baseCount = availableNicknames.length;
+            for (let i = 0; i < count; i++) {
+                if (availableNicknames.length > 0 && Math.random() < 0.95) { 
+                    selectedNicknames.push(availableNicknames.splice(Math.floor(Math.random() * availableNicknames.length), 1)[0]);
+                } else { 
+                    selectedNicknames.push(sourceArray[i % baseCount] + (baseCount < count ? ` ${Math.floor(i / baseCount) + 2}`: ''));
+                }
+            }
+            return selectedNicknames;
+        }
+
+        const displayNicknamesCount = 100; 
+        const SPHERE_RADIUS = 170; 
+        
+        const fiberNicknameElements = []; 
+        // displayNicknames 将在异步获取后填充
+        let displayNicknames = []; 
+
+        let currentRotationX = 10; 
+        let currentRotationY = 15;
+        const autoRotateSpeedY = 0.05; 
+        let isDragging = false;
+        let previousMouseX = 0;
+        let previousMouseY = 0;
+
+        const goldenAngle = Math.PI * (3 - Math.sqrt(5)); 
+
+        function matrixToCss(matrix) {
+            return `matrix3d(${matrix.toFloat64Array().join(',')})`;
+        }
+
+    async function initializeSphere() {
+        let fetchedNicknames = [];
+        try {
+            fetchedNicknames = await fetchNicknamesFromBackend();
+        } catch (error) {
+            console.error("获取后端昵称失败:", error);
+            fetchedNicknames = []; // 出错则使用空数组
+        }
+
+        let combinedNicknames;
+        if (fetchedNicknames.length > 0) {
+            if (fetchedNicknames.length > displayNicknamesCount) {
+                // 后端返回数量大于100，随机取100个
+                combinedNicknames = generateRandomNicknames(displayNicknamesCount, fetchedNicknames);
+            } else {
+                // 后端返回数量小于等于100
+                combinedNicknames = [...fetchedNicknames];
+            }
+        } else {
+            // 后端没有返回数据或获取失败
+            combinedNicknames = [];
+        }
+        
+        const neededFallbackCount = displayNicknamesCount - combinedNicknames.length;
+
+        if (neededFallbackCount > 0) {
+            // 确保 fallbackNicknames 中的昵称不与 fetchedNicknames 重复（如果 fetchedNicknames 存在）
+            const availableFallbacks = fallbackNicknames.filter(nick => !combinedNicknames.includes(nick));
+            const fallbacksToUse = generateRandomNicknames(neededFallbackCount, availableFallbacks.length > 0 ? availableFallbacks : fallbackNicknames);
+            combinedNicknames = combinedNicknames.concat(fallbacksToUse);
+        }
+        
+        displayNicknames = combinedNicknames.slice(0, displayNicknamesCount); 
+        
+        console.log("最终用于显示的昵称:", displayNicknames);
+        createSphereElements(); // 创建球体元素
+        requestAnimationFrame(updatePositionsAndProjection); // 开始动画
+    }
+
+    function createSphereElements() {
+        // 清空旧元素（如果需要重新初始化）
+        soulSphereContainer.innerHTML = '';
+        nicknameOverlay.innerHTML = '';
+        fiberNicknameElements.length = 0;
+
+        for (let i = 0; i < displayNicknames.length; i++) { // 使用 displayNicknames.length
+            const name = displayNicknames[i];
+            
+            const y_norm = 1 - (i / (displayNicknames.length - 1)) * 2; 
+            const radiusAtY = Math.sqrt(1 - y_norm * y_norm); 
+            const theta = goldenAngle * i; 
+            const x_norm = Math.cos(theta) * radiusAtY;
+            const z_norm = Math.sin(theta) * radiusAtY;
+
+            const final_x = x_norm * SPHERE_RADIUS;
+            const final_y = y_norm * SPHERE_RADIUS;
+            const final_z = z_norm * SPHERE_RADIUS;
+            
+            const currentFiberLength = SPHERE_RADIUS;
+
+            const fiberWrapper = document.createElement('div');
+            fiberWrapper.className = 'nickname-fiber-wrapper';
+            fiberWrapper.style.setProperty('--fiber-length', `${currentFiberLength}px`); 
+            
+            const fiberLine = document.createElement('div');
+            fiberLine.className = 'nickname-fiber-line';
+            fiberWrapper.appendChild(fiberLine);
+            soulSphereContainer.appendChild(fiberWrapper); 
+
+            const nicknameText = document.createElement('div');
+            nicknameText.className = 'nickname-text-billboard';
+            nicknameText.textContent = name;
+            nicknameOverlay.appendChild(nicknameText);
+            
+            const initialSpherePos = { x: final_x, y: final_y, z: final_z };
+
+            const wrapperAzimuthRad = Math.atan2(final_z, final_x); 
+            const wrapperInclinationRad = Math.acos(final_y / SPHERE_RADIUS);
+            const initialFiberOrientation = `rotateY(${wrapperAzimuthRad * 180 / Math.PI}deg) rotateX(${(wrapperInclinationRad * 180 / Math.PI) - 90}deg)`;
+
+
+            fiberNicknameElements.push({ 
+                fiberWrapper, 
+                nicknameText, 
+                initialSpherePos,
+                initialFiberOrientation 
+            });
+
+            const delay = Math.random() * 1.8; 
+            fiberWrapper.style.opacity = '0';
+            nicknameText.style.opacity = '0';
+            nicknameText.style.transform = 'translate(-50%, -50%) scale(0.3)';
+
+            setTimeout(() => {
+                fiberWrapper.style.transition = 'opacity 0.9s ease-out';
+                nicknameText.style.transition = 'opacity 0.9s ease-out, transform 0.9s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                if (i < 5 || Math.random() < 0.1) { 
+                     nicknameText.style.transform = 'translate(-50%, -50%) scale(1)';
+                } else {
+                    setTimeout(() => {
+                        if (parseFloat(nicknameText.style.opacity) > 0.1) { 
+                            nicknameText.style.transform = 'translate(-50%, -50%) scale(0.65)'; 
+                        }
+                    }, 900); 
+                }
+            }, i * 22 + 300); 
+        }
+    }
+        let perspectiveValue = parseFloat(getComputedStyle(soulSphereSection).perspective);
+        if (isNaN(perspectiveValue) || perspectiveValue <= 0) {
+            perspectiveValue = 800; 
+        }
+
+        function updatePositionsAndProjection() {
+            if (!isDragging) {
+                currentRotationY += autoRotateSpeedY;
+            }
+            const contentRotationMatrix = new DOMMatrix()
+                .rotate(currentRotationX, currentRotationY, 0); 
+            const contentMatrixCss = matrixToCss(contentRotationMatrix);
+
+            const overlayRect = nicknameOverlay.getBoundingClientRect();
+            const overlayCenterX = overlayRect.width / 2;
+            const overlayCenterY = overlayRect.height / 2;
+
+            fiberNicknameElements.forEach(el => {
+                const p = el.initialSpherePos; 
+                const p3d_initial = new DOMPoint(p.x, p.y, p.z);
+                const rotatedEffectivePos = p3d_initial.matrixTransform(contentRotationMatrix);
+
+                el.fiberWrapper.style.transform = 
+                    `translate3d(${rotatedEffectivePos.x}px, ${rotatedEffectivePos.y}px, ${rotatedEffectivePos.z}px) ` +
+                    contentMatrixCss + 
+                    el.initialFiberOrientation;
+
+                const projectionDivisor = perspectiveValue + rotatedEffectivePos.z;
+                
+                if (projectionDivisor <= 20) { 
+                    el.nicknameText.style.opacity = '0';
+                    el.nicknameText.style.pointerEvents = 'none';
+                    el.fiberWrapper.style.opacity = '0'; 
+                } else {
+                    el.nicknameText.style.pointerEvents = 'auto';
+                    const projectionScale = perspectiveValue / projectionDivisor;
+
+                    const screenX = rotatedEffectivePos.x * projectionScale;
+                    const screenY = rotatedEffectivePos.y * projectionScale;
+
+                    el.nicknameText.style.left = `${overlayCenterX + screenX}px`;
+                    el.nicknameText.style.top = `${overlayCenterY + screenY}px`;
+
+                    const depthFactorText = (rotatedEffectivePos.z + SPHERE_RADIUS) / (2 * SPHERE_RADIUS); 
+                    const textOpacity = Math.max(0.2, 0.45 + 0.55 * (1 - depthFactorText * 1.0)); 
+                    const textScale = Math.max(0.45, 0.65 + 0.45 * (1 - depthFactorText * 0.6)); 
+                    
+                    el.nicknameText.style.transform = `translate(-50%, -50%) scale(${textScale.toFixed(2)})`;
+                    el.nicknameText.style.opacity = textOpacity.toFixed(2);
+                    el.nicknameText.style.zIndex = Math.floor(100 + projectionScale * 150);
+
+                    const depthFactorFiber = (rotatedEffectivePos.z + SPHERE_RADIUS) / (2 * SPHERE_RADIUS);
+                    const fiberOpacity = Math.max(0.15, 0.4 + 0.6 * (1 - depthFactorFiber * 1.0)); 
+                    el.fiberWrapper.style.opacity = fiberOpacity.toFixed(2);
+                }
+            });
+
+            requestAnimationFrame(updatePositionsAndProjection);
+        }
+
+        // --- Interaction Logic ---
+        function getClientX(event) { return event.clientX || (event.touches && event.touches[0].clientX); }
+        function getClientY(event) { return event.clientY || (event.touches && event.touches[0].clientY); }
+
+        soulSphereSection.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            soulSphereSection.classList.add('dragging');
+            previousMouseX = getClientX(e);
+            previousMouseY = getClientY(e);
+            e.preventDefault();
+        });
+        soulSphereSection.addEventListener('touchstart', (e) => {
+            isDragging = true;
+            soulSphereSection.classList.add('dragging');
+            previousMouseX = getClientX(e);
+            previousMouseY = getClientY(e);
+            e.preventDefault(); 
+        }, { passive: false });
+
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const clientX = getClientX(e);
+            const clientY = getClientY(e);
+            const deltaX = clientX - previousMouseX;
+            const deltaY = clientY - previousMouseY;
+
+            currentRotationY += deltaX * 0.25; 
+            currentRotationX -= deltaY * 0.25;
+            currentRotationX = Math.max(-85, Math.min(85, currentRotationX));
+
+            previousMouseX = clientX;
+            previousMouseY = clientY;
+        });
+        window.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+             e.preventDefault(); 
+            const clientX = getClientX(e);
+            const clientY = getClientY(e);
+            const deltaX = clientX - previousMouseX;
+            const deltaY = clientY - previousMouseY;
+
+            currentRotationY += deltaX * 0.25;
+            currentRotationX -= deltaY * 0.25;
+            currentRotationX = Math.max(-85, Math.min(85, currentRotationX));
+
+            previousMouseX = clientX;
+            previousMouseY = clientY;
+        }, { passive: false });
+
+        window.addEventListener('mouseup', () => {
+            if (isDragging) {
+                isDragging = false;
+                soulSphereSection.classList.remove('dragging');
+            }
+        });
+        window.addEventListener('touchend', () => {
+             if (isDragging) {
+                isDragging = false;
+                soulSphereSection.classList.remove('dragging');
+            }
+        });
+         window.addEventListener('mouseleave', () => { 
+            if (isDragging) {
+                isDragging = false;
+                soulSphereSection.classList.remove('dragging');
+            }
+        });
+
+        // requestAnimationFrame(updatePositionsAndProjection); // 已移至 initializeSphere
+        initializeSphere(); // 初始化球体和昵称
+
+        async function handleMatchChatClick() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                // If not logged in, proceed to matching lobby as profile check is irrelevant.
+                window.location.href = 'matching_lobby.html';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${CONFIG.API_BASE_URL}/api/profile`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    console.error('获取用户信息失败:', response.status);
+                    // Fallback: proceed to matching lobby if profile fetch fails
+                    const proceed = confirm('获取用户信息失败。是否仍要直接进入匹配？');
+                    if (proceed) {
+                        window.location.href = 'matching_lobby.html';
+                    }
+                    return;
+                }
+
+                const userProfile = await response.json();
+                
+                // Ensure userProfile and its properties exist before checking
+                const gender = userProfile && userProfile.gender;
+                const province = userProfile && userProfile.province;
+                const city = userProfile && userProfile.city;
+
+                const isGenderMissing = !gender;
+                const isProvinceMissing = !province;
+                const isCityMissing = !city;
+
+                if (isGenderMissing || isProvinceMissing || isCityMissing) {
+                    let missingFields = [];
+                    if (isGenderMissing) missingFields.push("性别");
+                    if (isProvinceMissing) missingFields.push("省份");
+                    if (isCityMissing) missingFields.push("城市");
+
+                    const message = `您的 ${missingFields.join("、")} 信息不完整，建议完善资料以获得更精准的匹配。\n\n是否现在前往个人资料页面完善信息？\n（点击“取消”将直接开始匹配）`;
+                    
+                    if (confirm(message)) {
+                        window.location.href = 'profile.html';
+                    } else {
+                        window.location.href = 'matching_lobby.html';
+                    }
+                } else {
+                    window.location.href = 'matching_lobby.html';
+                }
+            } catch (error) {
+                console.error('检查用户信息时出错:', error);
+                const proceedOnError = confirm('检查用户信息时出错。是否仍要直接进入匹配？');
+                if (proceedOnError) {
+                    window.location.href = 'matching_lobby.html';
+                }
+            }
+        }
+
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetElement = document.querySelector(this.getAttribute('href'));
+                if (targetElement) {
+                    targetElement.scrollIntoView({ behavior: 'smooth'});
+                }
+            });
+        });
+
+        // Theme Switcher Logic
+        document.addEventListener('DOMContentLoaded', () => {
+            // User Authentication Display Logic
+            const token = localStorage.getItem('token'); // token is defined here
+            const registerBtn = document.getElementById('registerBtn');
+            const loginBtn = document.getElementById('loginBtn');
+            const profileBtn = document.getElementById('profileBtn');
+
+            if (token) {
+                if(registerBtn) registerBtn.style.display = 'none';
+                if(loginBtn) loginBtn.style.display = 'none';
+                if(profileBtn) profileBtn.style.display = 'inline-block'; // Or 'flex', depending on styling
+            } else {
+                if(registerBtn) registerBtn.style.display = 'inline-block';
+                if(loginBtn) loginBtn.style.display = 'inline-block';
+                if(profileBtn) profileBtn.style.display = 'none';
+            }
+
+            const fabThemeButton = document.getElementById('fabThemeButton');
+            const colorDrawer = document.getElementById('colorDrawer');
+            const colorOptionsContainer = document.getElementById('colorOptionsContainer');
+            const root = document.documentElement;
+
+            const themes = [
+                { name: 'Default Purple', primary: '#c471ed', secondary: '#6253FF', text: '#f0d9ff', tip: '#ffffff' },
+                { name: 'Cyber Blue', primary: '#00e0ff', secondary: '#0077ff', text: '#e0f7ff', tip: '#ffffff' },
+                { name: 'Synth Pink', primary: '#ff00aa', secondary: '#c500ff', text: '#ffe0f5', tip: '#ffffff' },
+                { name: 'Emerald Green', primary: '#00ffaa', secondary: '#00aa7f', text: '#e0fff5', tip: '#ffffff' },
+                { name: 'Solar Orange', primary: '#ffaa00', secondary: '#ff7700', text: '#fff5e0', tip: '#ffffff' },
+                { name: 'Ruby Red', primary: '#ff0055', secondary: '#aa003c', text: '#ffe0e8', tip: '#ffffff' }
+            ];
+
+            let currentTheme = themes[0]; // Default theme
+
+            function applyTheme(theme) {
+                root.style.setProperty('--primary-glow-color', theme.primary);
+                root.style.setProperty('--secondary-glow-color', theme.secondary);
+                root.style.setProperty('--text-glow-color', theme.text);
+                root.style.setProperty('--fiber-tip-highlight', theme.tip);
+                setRgbCssVars(); // Update RGB versions for CSS
+                currentTheme = theme;
+                localStorage.setItem('selectedTheme', JSON.stringify(theme));
+                updateActiveColorOption();
+            }
+
+            function loadTheme() {
+                const savedTheme = localStorage.getItem('selectedTheme');
+                if (savedTheme) {
+                    applyTheme(JSON.parse(savedTheme));
+                } else {
+                    applyTheme(themes[0]); // Apply default if no theme saved
+                }
+            }
+
+            function updateActiveColorOption() {
+                const options = colorOptionsContainer.querySelectorAll('.color-option');
+                options.forEach(opt => {
+                    if (opt.dataset.primary === currentTheme.primary) {
+                        opt.classList.add('active');
+                    } else {
+                        opt.classList.remove('active');
+                    }
+                });
+            }
+
+            themes.forEach(theme => {
+                const option = document.createElement('div');
+                option.className = 'color-option';
+                option.dataset.primary = theme.primary; // Store primary color for identification
+                
+                const span = document.createElement('span');
+                span.style.background = `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`;
+                option.appendChild(span);
+
+                option.setAttribute('title', theme.name);
+                option.addEventListener('click', () => {
+                    applyTheme(theme);
+                });
+                colorOptionsContainer.appendChild(option);
+            });
+
+            fabThemeButton.addEventListener('click', () => {
+                colorDrawer.classList.toggle('open');
+            });
+
+            // Close drawer if clicked outside
+            document.addEventListener('click', (event) => {
+                if (!colorDrawer.contains(event.target) && !fabThemeButton.contains(event.target) && colorDrawer.classList.contains('open')) {
+                    colorDrawer.classList.remove('open');
+                }
+            });
+            
+            loadTheme(); // Load saved theme on page load
+
+            // --- Logic to fetch and display total unread count on chat nav badge ---
+            function updateTotalUnreadBadgeOnNav(count) {
+                const chatNavBadge = document.getElementById('chat-nav-badge');
+                if (chatNavBadge) {
+                    if (count > 0) {
+                        chatNavBadge.textContent = count > 99 ? '99+' : count;
+                        chatNavBadge.style.display = 'flex'; // Ensure it's visible
+                    } else {
+                        chatNavBadge.textContent = '';
+                        chatNavBadge.style.display = 'none';
+                    }
+                }
+            }
+
+            function fetchTotalUnreadCountForNav() {
+                // 'token' is already defined in this 'DOMContentLoaded' scope by "User Authentication Display Logic"
+                if (!token) {
+                console.log('No token found, cannot fetch unread count for nav badge.');
+                updateTotalUnreadBadgeOnNav(0); // Ensure badge is hidden if no token
+                return;
+            }
+            console.log('Attempting to fetch total unread count for nav badge...');
+            fetch(`${CONFIG.API_BASE_URL}/api/unread-count`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+                })
+                .then(response => {
+                    console.log('Nav badge: Received response from /api/unread-count (status):', response.status);
+                    if (!response.ok) {
+                        return response.text().then(text => {
+                            console.error('Nav badge: Error response body from /api/unread-count:', text);
+                            throw new Error(`HTTP error! status: ${response.status}, body: ${text}`);
+                        }).catch(err => {
+                            console.error('Nav badge: Failed to read error response body or not text:', err);
+                            throw new Error(`HTTP error! status: ${response.status}, (could not read error body)`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data instanceof Error) { return; } // Already handled by previous catch
+                    if (data && typeof data.unread_count !== 'undefined') {
+                        updateTotalUnreadBadgeOnNav(data.unread_count);
+                        console.log('Nav badge: Total unread count fetched:', data.unread_count);
+                    } else {
+                        console.error('Nav badge: Failed to get unread_count from API response:', data);
+                        updateTotalUnreadBadgeOnNav(0); // Hide badge on error
+                    }
+                })
+                .catch(error => {
+                    console.error('Nav badge: Error fetching total unread count:', error.message);
+                    updateTotalUnreadBadgeOnNav(0); // Hide badge on error
+                });
+            }
+
+            if (token) { // Only attempt to fetch if token exists
+                fetchTotalUnreadCountForNav();
+            } else {
+                updateTotalUnreadBadgeOnNav(0); // Ensure badge is hidden if no token initially
+            }
+            // --- End of unread count logic ---
+
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>心动匹配 - 卡片匹配</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css"> <!-- General styles -->
+    <link rel="stylesheet" href="css/theme-styles.css"> <!-- Theme specific styles -->
+    <style>
+        /* 
+         * ===================================================================
+         * 新增修改 (Key Changes)
+         * ===================================================================
+         * 1. [新] 增加了 .card-stack 的 min-height，使卡片区域更高。
+         * 2. [新] JS 中重新引入了 2D rotate 变换，实现带角度的滑动。
+         * 3. 保持了简化的CSS，没有使用 perspective，以确保性能稳定。
+         * ===================================================================
+        */
+        .container {
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            box-sizing: border-box;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            position: relative;
+            z-index: 10;
+        }
+
+        main.swipe-container {
+            text-align: center;
+            margin: 10px 0 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-stack {
+            position: relative;
+            width: 100%;
+            /* [新] 显著增加最小高度，让卡片更高 */
+            min-height: 650px; 
+            margin: 0 auto;
+            flex: 1; 
+        }
+
+        .card {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--card-bg-color, #2c2c3e);
+            border-radius: 20px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+            transition: transform 0.4s ease-out, opacity 0.4s ease-out;
+            touch-action: none;
+            cursor: grab;
+            will-change: transform, opacity;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card.dragging {
+            transition: none;
+            cursor: grabbing;
+        }
+
+        .card.swiped {
+            pointer-events: none;
+        }
+        
+        /* 图片、信息、按钮等其他样式保持不变... */
+        .card-image {
+            position: relative;
+            height: 60%;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .card-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .card:hover .card-image img {
+            transform: scale(1.03);
+        }
+
+        .card-image::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 70%;
+            background: linear-gradient(to top, rgba(0,0,0,0.75), transparent);
+            z-index: 1;
+        }
+
+        .profile-link {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            z-index: 2;
+            text-decoration: none;
+            color: var(--fiber-tip-highlight);
+            font-weight: bold;
+            font-size: 20px;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.7);
+        }
+
+        .profile-link span {
+            font-weight: normal;
+            font-size: 16px;
+            margin-left: 5px;
+            opacity: 0.9;
+        }
+
+        .card-info {
+            padding: 15px;
+            padding-bottom: 20px;
+            text-align: left;
+            position: relative;
+            height: 40%;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .card-info p {
+            margin: 0 0 10px;
+            color: var(--text-glow-color);
+            font-size: 14px;
+            line-height: 1.5;
+            flex-grow: 1;
+        }
+        
+        .btn-chat { 
+            border: none;
+            padding: 10px 25px; 
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 15px; 
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            align-self: center;
+            margin-top: auto;
+        }
+
+        .btn-chat i {
+            margin-right: 8px;
+        }
+
+        .swipe-indicators {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 40px);
+            max-width: 300px;
+            z-index: 5;
+            display: flex;
+            justify-content: space-around;
+        }
+
+        .indicator {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-glow-color);
+            font-weight: 500;
+            transition: all 0.3s ease;
+            font-size: 0.8rem;
+        }
+
+        .indicator i {
+            font-size: 24px;
+            margin-bottom: 5px;
+            background: rgba(var(--primary-glow-color-rgb, 196, 113, 237), 0.1);
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            border: 1px solid rgba(var(--primary-glow-color-rgb, 196, 113, 237),0.2);
+        }
+
+        .indicator.skip i { color: var(--secondary-glow-color); }
+        .indicator.like i { color: var(--primary-glow-color); }
+
+        .swipe-feedback {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 10;
+            border-radius: 20px;
+            text-shadow: 0 0 8px rgba(0,0,0,0.5);
+        }
+
+        .swipe-feedback.like {
+            background: rgba(var(--primary-glow-color-rgb, 196, 113, 237), 0.2);
+            color: var(--primary-glow-color);
+        }
+
+        .swipe-feedback.skip {
+            background: rgba(var(--secondary-glow-color-rgb, 98, 83, 255), 0.2);
+            color: var(--secondary-glow-color);
+        }
+        
+        /* 匹配动画样式保持不变 */
+        .match-animation { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5, 2, 16, 0.85); backdrop-filter: blur(8px); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.5s ease; }
+        .match-animation.show { opacity: 1; pointer-events: all; }
+        .heart-pulse { font-size: 100px; color: var(--primary-glow-color); animation: pulse 1.5s infinite; margin-bottom: 25px; text-shadow: 0 0 15px var(--primary-glow-color); }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
+        .match-text { color: var(--text-glow-color); font-size: 32px; font-weight: bold; text-align: center; margin-bottom: 25px; text-shadow: 0 0 8px var(--primary-glow-color); }
+        .match-buttons { display: flex; gap: 20px; }
+        .match-btn { padding: 10px 25px; border-radius: 30px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; border: none; }
+        .match-btn.close { background: rgba(var(--text-glow-color-rgb, 240, 217, 255), 0.15); color: var(--text-glow-color); border: 1px solid rgba(var(--text-glow-color-rgb, 240, 217, 255), 0.3); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); }
+        .match-btn.close:hover { background: rgba(var(--text-glow-color-rgb, 240, 217, 255), 0.25); }
+        
+        @media (max-width: 480px) {
+            /* [新] 调整移动设备上的高度 */
+            .card-stack { min-height: 600px; }
+            .card-image { height: 65%; }
+            .card-info { height: 35%; }
+            .profile-link { font-size: 18px; bottom: 12px; left: 12px; }
+            /* 其他响应式样式保持不变 */
+        }
+        
+        /* 导航角标等样式保持不变 */
+        .nav-item { position: relative; }
+        .nav-item .badge { position: absolute; top: 2px; right: 5px; background-color: var(--primary-glow-color); color: #050210; border-radius: 50%; min-width: 18px; height: 18px; padding: 0 4px; font-size: 10px; font-weight: bold; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 3px var(--primary-glow-color); line-height: 1; box-sizing: border-box; display: none; }
+    </style>
+</head>
+<body class="theme-active">
+    <!-- 页面结构保持不变 -->
+    <div class="tech-beams-background">
+        <div class="beam beam-1"></div>
+        <div class="beam beam-2"></div>
+        <div class="beam beam-3"></div>
+        <div class="beam beam-4"></div>
+    </div>
+    <div class="container">
+        <header>
+            <div class="logo theme-active-logo">
+                <i class="fas fa-heart"></i>
+                <span>心动匹配</span>
+            </div>
+            <div class="user-actions">
+                <button class="btn btn-outline theme-active-btn"><i class="fas fa-cog"></i></button>
+            </div>
+        </header>
+        <main class="swipe-container">
+            <div class="swipe-indicators">
+                <div class="indicator skip">
+                    <i class="fas fa-times"></i>
+                    <span>左滑跳过</span>
+                </div>
+                <div class="indicator like">
+                    <i class="fas fa-heart"></i>
+                    <span>右滑喜欢</span>
+                </div>
+            </div>
+            <div class="card-stack"></div>
+        </main>
+        <nav class="bottom-nav theme-active-nav">
+            <a href="index.html" class="nav-item">
+                <i class="fas fa-home"></i>
+                <span>首页</span>
+            </a>
+            <a href="swipe.html" class="nav-item active">
+                <i class="fas fa-layer-group"></i>
+                <span>卡片</span>
+            </a>
+            <a href="interests.html" class="nav-item">
+                <i class="fas fa-hashtag"></i>
+                <span>兴趣</span>
+            </a>
+            <a href="chat-list.html" class="nav-item">
+                <i class="fas fa-comments"></i>
+                <span>聊天</span>
+                <span class="badge" id="chat-nav-badge"></span>
+            </a>
+        </nav>
+    </div>
+    <button class="fab-theme-button" id="fabThemeButton" aria-label="打开颜色选择器">
+        <i class="fas fa-palette"></i>
+    </button>
+    <div class="color-drawer" id="colorDrawer">
+        <h4>选择主题颜色</h4>
+        <div class="color-options" id="colorOptionsContainer"></div>
+    </div>
+    <div class="match-animation" id="matchAnimation">
+        <div class="heart-pulse"><i class="fas fa-heart"></i></div>
+        <div class="match-text">你们匹配成功了！</div>
+        <div class="match-buttons">
+            <button class="match-btn chat" onclick="window.location.href='chat-list.html'">
+                <i class="fas fa-comments"></i> 开始聊天
+            </button>
+            <button class="match-btn close" id="closeMatch">
+                <i class="fas fa-times"></i> 关闭
+            </button>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script> <!-- 引入配置文件 -->
+    <script>
+        // 大部分JS逻辑保持不变，只修改 setupSwipeEvents
+        let cardData = [];
+        let currentMatchedUser = null;
+
+        // ... checkAuth, loadRecommendedUsers, showEmptyState, handleSwipe, showMatchAnimation, createCards 函数保持不变 ...
+        // ... (此处省略未改变的JS函数，以节省篇幅，实际使用时请保留它们) ...
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('请先登录');
+                window.location.href = 'login.html';
+                return false;
+            }
+            return true;
+        }
+
+        async function loadRecommendedUsers() {
+            if (!checkAuth()) return;
+
+            const cardStack = document.querySelector('.card-stack');
+            cardStack.innerHTML = `<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-glow-color); text-align: center;"><i class="fas fa-spinner fa-spin" style="font-size: 3rem; margin-bottom: 1rem;"></i><p>正在加载推荐...</p></div>`;
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('http://14.103.133.136:5000/api/discover', { headers: { 'Authorization': `Bearer ${token}` } });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    cardData = data.users.map(user => ({
+                        id: user.id,
+                        name: user.nickname,
+                        age: user.age,
+                        bio: user.bio || '这个人很神秘，什么都没有留下...',
+                        image: user.main_card || user.avatar || 'https://via.placeholder.com/400x600?text=No+Photo',
+                        profession: user.profession,
+                        province: user.province,
+                        city: user.city
+                    }));
+                    createCards();
+                } else {
+                    console.error('加载推荐用户失败');
+                    showEmptyState();
+                }
+            } catch (error) {
+                console.error('网络错误:', error);
+                alert('网络错误，请检查连接后重试');
+                showEmptyState();
+            }
+        }
+
+        function showEmptyState() {
+            const cardStack = document.querySelector('.card-stack');
+            cardStack.innerHTML = `<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-glow-color); text-align: center; padding: 20px;"><i class="fas fa-heart-broken" style="font-size: 4rem; margin-bottom: 1rem; opacity: 0.5;"></i><h3>暂无更多推荐</h3><p style="margin-bottom: 1.5rem;">完善你的个人资料，获得更多匹配机会！</p><button class="btn btn-primary theme-active-btn" onclick="window.location.href='profile.html'">完善资料</button></div>`;
+        }
+        
+        async function handleSwipe(userId, action) {
+            if (!checkAuth()) return;
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('http://14.103.133.136:5000/api/swipe', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ target_user_id: userId, action: action })
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.match) {
+                        currentMatchedUser = cardData.find(user => user.id == userId);
+                        showMatchAnimation();
+                    }
+                } else { console.error('滑动操作失败'); }
+            } catch (error) { console.error('网络错误:', error); }
+        }
+
+        function showMatchAnimation() {
+            const matchAnimation = document.getElementById('matchAnimation');
+            const matchText = matchAnimation.querySelector('.match-text');
+            if (currentMatchedUser) {
+                matchText.textContent = `你和 ${currentMatchedUser.name} 匹配成功了！`;
+            }
+            matchAnimation.classList.add('show');
+        }
+
+        function createCards() {
+            const cardStack = document.querySelector('.card-stack');
+            cardStack.innerHTML = '';
+
+            if (cardData.length === 0) {
+                showEmptyState();
+                return;
+            }
+
+            // 确保 CONFIG 和 CONFIG.API_BASE_URL 已定义
+            const imageBaseUrl = (typeof CONFIG !== 'undefined' && CONFIG.API_BASE_URL) ? CONFIG.API_BASE_URL : '';
+
+            cardData.forEach((card, index) => {
+                const cardElement = document.createElement('div');
+                cardElement.classList.add('card');
+                cardElement.dataset.id = card.id;
+                cardElement.style.zIndex = cardData.length - index;
+
+                let locationInfo = card.city && card.province ? `${card.city}, ${card.province}` : (card.city || card.province || '');
+                let professionInfo = card.profession ? `<br><small style="opacity: 0.8;">${card.profession}</small>` : '';
+
+                let imageUrl = card.image;
+                // 如果 image 路径是相对的 (以 / 开头但不是 //) 并且 imageBaseUrl 有效，则拼接
+                if (imageUrl && imageUrl.startsWith('/') && !imageUrl.startsWith('//') && imageBaseUrl) {
+                    imageUrl = imageBaseUrl + imageUrl;
+                } else if (!imageUrl) { // 如果 imageUrl 为空或未定义，使用占位符
+                    imageUrl = 'https://via.placeholder.com/400x600?text=No+Photo';
+                }
+                // 如果 imageUrl 已经是完整的 http/https URL，则直接使用
+
+                cardElement.innerHTML = `
+                    <div class="card-image">
+                        <img src="${imageUrl}" alt="${card.name}" onerror="this.src='https://via.placeholder.com/400x600?text=No+Photo'; this.onerror=null;">
+                        <div class="profile-link">
+                            ${card.name}<span>, ${card.age}</span>
+                            ${professionInfo}
+                            ${locationInfo ? `<br><small style="opacity: 0.7;"><i class="fas fa-map-marker-alt"></i> ${locationInfo}</small>` : ''}
+                        </div>
+                    </div>
+                    <div class="card-info">
+                        <p>${card.bio}</p>
+                        <button class="btn btn-chat btn-primary theme-active-btn" onclick="event.stopPropagation(); window.location.href='chat.html?id=${card.id}'">
+                            <i class="fas fa-comments"></i> 发起聊天
+                        </button>
+                    </div>
+                    <div class="swipe-feedback like"><i class="fas fa-heart"></i> 喜欢</div>
+                    <div class="swipe-feedback skip"><i class="fas fa-times"></i> 跳过</div>
+                `;
+
+                cardStack.appendChild(cardElement);
+            });
+            applyThemeToDynamicElements();
+            setupSwipeEvents();
+        }
+
+        function setupSwipeEvents() {
+            const cards = document.querySelectorAll('.card');
+            cards.forEach(card => {
+                let startX = 0;
+                let currentX = 0;
+                let isDragging = false;
+                
+                const likeFeedback = card.querySelector('.swipe-feedback.like');
+                const skipFeedback = card.querySelector('.swipe-feedback.skip');
+
+                const startDrag = (x) => {
+                    isDragging = true;
+                    startX = x;
+                    card.classList.add('dragging');
+                };
+
+                const moveDrag = (x) => {
+                    if (!isDragging) return;
+                    currentX = x - startX;
+                    
+                    // [新] 计算旋转角度。分母越大，旋转越不敏感。
+                    const rotation = currentX / 20; 
+
+                    // [新] 应用平移和旋转变换
+                    card.style.transform = `translateX(${currentX}px) rotate(${rotation}deg)`;
+                    
+                    const opacity = Math.min(Math.abs(currentX) / 100, 1);
+                    if (currentX > 20) {
+                        likeFeedback.style.opacity = opacity;
+                        skipFeedback.style.opacity = 0;
+                    } else if (currentX < -20) {
+                        skipFeedback.style.opacity = opacity;
+                        likeFeedback.style.opacity = 0;
+                    } else {
+                        likeFeedback.style.opacity = 0;
+                        skipFeedback.style.opacity = 0;
+                    }
+                };
+
+                const endDrag = () => {
+                    if (!isDragging) return;
+                    isDragging = false;
+                    card.classList.remove('dragging');
+                    
+                    likeFeedback.style.opacity = 0;
+                    skipFeedback.style.opacity = 0;
+                    
+                    const swipeThreshold = window.innerWidth / 3.5;
+
+                    if (Math.abs(currentX) > swipeThreshold) {
+                        const direction = currentX > 0 ? 'right' : 'left';
+                        card.classList.add('swiped');
+                        
+                        const flyOutX = direction === 'right' ? window.innerWidth * 1.2 : -window.innerWidth * 1.2;
+                        // [新] 飞出动画也带上固定的旋转角度
+                        const flyOutAngle = direction === 'right' ? 15 : -15;
+                        card.style.transform = `translateX(${flyOutX}px) rotate(${flyOutAngle}deg)`;
+                        card.style.opacity = '0';
+
+                        const action = direction === 'right' ? 'like' : 'pass';
+                        handleSwipe(card.dataset.id, action);
+                        
+                        setTimeout(() => {
+                            card.remove();
+                            if (document.querySelectorAll('.card').length <= 2) {
+                                loadRecommendedUsers();
+                            }
+                        }, 400);
+                    } else {
+                        // [新] 复位动画，回到原点和0度角
+                        card.style.transform = `translateX(0) rotate(0deg)`;
+                    }
+                    currentX = 0;
+                };
+
+                card.addEventListener('mousedown', (e) => { e.preventDefault(); startDrag(e.clientX); });
+                document.addEventListener('mousemove', (e) => moveDrag(e.clientX));
+                document.addEventListener('mouseup', endDrag);
+                document.addEventListener('mouseleave', endDrag);
+
+                card.addEventListener('touchstart', (e) => { startDrag(e.touches[0].clientX); });
+                document.addEventListener('touchmove', (e) => { if (isDragging) moveDrag(e.touches[0].clientX); });
+                document.addEventListener('touchend', endDrag);
+            });
+        }
+        
+        function applyThemeToDynamicElements() {
+            document.querySelectorAll('.card .btn-chat').forEach(btn => {
+                btn.classList.add('btn-primary', 'theme-active-btn');
+            });
+            const matchChatBtn = document.querySelector('.match-btn.chat');
+            if (matchChatBtn) {
+                matchChatBtn.classList.add('btn-primary', 'theme-active-btn');
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+             // ... 这里的逻辑保持不变，包括主题切换和未读消息角标 ...
+            const token = localStorage.getItem('token');
+            loadRecommendedUsers();
+            
+            document.getElementById('closeMatch').addEventListener('click', () => {
+                document.getElementById('matchAnimation').classList.remove('show');
+            });
+
+            // 主题切换器逻辑
+            const fabThemeButton = document.getElementById('fabThemeButton');
+            const colorDrawer = document.getElementById('colorDrawer');
+            const colorOptionsContainer = document.getElementById('colorOptionsContainer');
+            const root = document.documentElement;
+
+            function hexToRgb(hex) {
+                const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null;
+            }
+
+            function setRgbCssVars() {
+                const rootStyles = getComputedStyle(document.documentElement);
+                const primaryGlowHex = rootStyles.getPropertyValue('--primary-glow-color').trim();
+                const secondaryGlowHex = rootStyles.getPropertyValue('--secondary-glow-color').trim();
+                const textGlowHex = rootStyles.getPropertyValue('--text-glow-color').trim();
+
+                const primaryGlowRgb = hexToRgb(primaryGlowHex);
+                const secondaryGlowRgb = hexToRgb(secondaryGlowHex);
+                const textGlowRgb = hexToRgb(textGlowHex);
+
+                if (primaryGlowRgb) root.style.setProperty('--primary-glow-color-rgb', `${primaryGlowRgb.r},${primaryGlowRgb.g},${primaryGlowRgb.b}`);
+                if (secondaryGlowRgb) root.style.setProperty('--secondary-glow-color-rgb', `${secondaryGlowRgb.r},${secondaryGlowRgb.g},${secondaryGlowRgb.b}`);
+                if (textGlowRgb) root.style.setProperty('--text-glow-color-rgb', `${textGlowRgb.r},${textGlowRgb.g},${textGlowRgb.b}`);
+            }
+
+            const themes = [
+                { name: 'Default Purple', primary: '#c471ed', secondary: '#6253FF', text: '#f0d9ff', tip: '#ffffff' },
+                { name: 'Cyber Blue', primary: '#00e0ff', secondary: '#0077ff', text: '#e0f7ff', tip: '#ffffff' },
+                { name: 'Synth Pink', primary: '#ff00aa', secondary: '#c500ff', text: '#ffe0f5', tip: '#ffffff' },
+                { name: 'Emerald Green', primary: '#00ffaa', secondary: '#00aa7f', text: '#e0fff5', tip: '#ffffff' },
+                { name: 'Solar Orange', primary: '#ffaa00', secondary: '#ff7700', text: '#fff5e0', tip: '#ffffff' },
+                { name: 'Ruby Red', primary: '#ff0055', secondary: '#aa003c', text: '#ffe0e8', tip: '#ffffff' }
+            ];
+            let currentTheme = themes[0];
+
+            function applyTheme(theme) {
+                root.style.setProperty('--primary-glow-color', theme.primary);
+                root.style.setProperty('--secondary-glow-color', theme.secondary);
+                root.style.setProperty('--text-glow-color', theme.text);
+                root.style.setProperty('--fiber-tip-highlight', theme.tip);
+                setRgbCssVars();
+                currentTheme = theme;
+                localStorage.setItem('selectedTheme', JSON.stringify(theme));
+                updateActiveColorOption();
+                applyThemeToDynamicElements();
+            }
+
+            function loadTheme() {
+                const savedTheme = localStorage.getItem('selectedTheme');
+                applyTheme(savedTheme ? JSON.parse(savedTheme) : themes[0]);
+            }
+
+            function updateActiveColorOption() {
+                const options = colorOptionsContainer.querySelectorAll('.color-option');
+                options.forEach(opt => {
+                    opt.classList.toggle('active', opt.dataset.primary === currentTheme.primary);
+                });
+            }
+
+            themes.forEach(theme => {
+                const option = document.createElement('div');
+                option.className = 'color-option';
+                option.dataset.primary = theme.primary;
+                option.innerHTML = `<span style="background: linear-gradient(135deg, ${theme.primary}, ${theme.secondary})"></span>`;
+                option.title = theme.name;
+                option.addEventListener('click', () => applyTheme(theme));
+                colorOptionsContainer.appendChild(option);
+            });
+            
+            fabThemeButton.addEventListener('click', () => colorDrawer.classList.toggle('open'));
+            document.addEventListener('click', (event) => {
+                if (!colorDrawer.contains(event.target) && !fabThemeButton.contains(event.target)) {
+                    colorDrawer.classList.remove('open');
+                }
+            });
+
+            loadTheme();
+            setRgbCssVars();
+
+            // 未读消息角标逻辑
+            function updateTotalUnreadBadgeOnNav(count) {
+                const chatNavBadge = document.getElementById('chat-nav-badge');
+                if (chatNavBadge) {
+                    if (count > 0) {
+                        chatNavBadge.textContent = count > 99 ? '99+' : count;
+                        chatNavBadge.style.display = 'flex';
+                    } else {
+                        chatNavBadge.style.display = 'none';
+                    }
+                }
+            }
+            function fetchTotalUnreadCountForNav() {
+                if (!token) { updateTotalUnreadBadgeOnNav(0); return; }
+                fetch('http://14.103.133.136:5000/api/unread-count', { headers: { 'Authorization': `Bearer ${token}` } })
+                .then(response => response.ok ? response.json() : Promise.reject(response))
+                .then(data => {
+                    updateTotalUnreadBadgeOnNav(data.unread_count || 0);
+                })
+                .catch(error => {
+                    console.error('Error fetching total unread count:', error);
+                    updateTotalUnreadBadgeOnNav(0);
+                });
+            }
+            if (token) { fetchTotalUnreadCountForNav(); }
+        });
+    </script>
+</body>
+</html>
